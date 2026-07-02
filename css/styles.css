@@ -1,32 +1,37 @@
-/* ---- theme tokens ---- */
+/* ---- theme tokens: warm, low-saturation surfaces; terracotta anchor ---- */
 :root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --surface-2: #eef0f4;
-  --border: #e2e5ea;
-  --text: #1b1f27;
-  --text-dim: #6b7280;
-  --accent: #4f6df5;
-  --accent-soft: #e8ecfe;
-  --danger: #dc2626;
-  --green: #16a34a;
-  --amber: #d97706;
-  --shadow: 0 1px 3px rgba(16, 24, 40, .06), 0 4px 16px rgba(16, 24, 40, .05);
-  --radius: 10px;
+  --bg: #faf6f0;            /* warm paper */
+  --surface: #fffdf9;
+  --surface-2: #f3ebe1;
+  --border: #e9ddcf;
+  --text: #33291f;          /* warm near-black brown */
+  --text-dim: #93836f;
+  --accent: #c4633c;        /* terracotta — the anchor color */
+  --accent-soft: #f6e3d7;
+  --highlight: #d96f45;     /* the ONE saturated moment per screen */
+  --amber: #c08a2d;
+  --pink: #c27b93;
+  --danger: #bf4934;
+  --green: #6f8f52;         /* olive success, not neon */
+  --shadow: 0 1px 2px rgba(80, 55, 30, .05), 0 6px 22px rgba(80, 55, 30, .06);
+  --radius: 14px;
+  --font-serif: 'Iowan Old Style', 'Palatino Nova', Palatino, Georgia, serif;
 }
 [data-theme="dark"] {
-  --bg: #12141a;
-  --surface: #1b1e27;
-  --surface-2: #232734;
-  --border: #2c3140;
-  --text: #e7e9ee;
-  --text-dim: #9aa1af;
-  --accent: #7c93ff;
-  --accent-soft: #262e4d;
-  --danger: #f87171;
-  --green: #4ade80;
-  --amber: #fbbf24;
-  --shadow: 0 1px 3px rgba(0, 0, 0, .4);
+  --bg: #211a14;            /* warm coffee dark, not gray-blue */
+  --surface: #2a221a;
+  --surface-2: #362c22;
+  --border: #473a2d;
+  --text: #f1e7da;
+  --text-dim: #ab9b87;
+  --accent: #e0885c;
+  --accent-soft: #45301f;
+  --highlight: #e5794a;
+  --amber: #d9a648;
+  --pink: #d494ab;
+  --danger: #e07b62;
+  --green: #96b26f;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .45);
 }
 
 /* ---- base ---- */
@@ -53,7 +58,7 @@ a { color: var(--accent); }
   display: flex; flex-direction: column; gap: 18px;
   position: sticky; top: 0; height: 100vh;
 }
-.logo { font-weight: 700; font-size: 17px; padding: 0 10px; display: flex; gap: 8px; align-items: center; }
+.logo { font-weight: 700; font-size: 18px; padding: 0 10px; display: flex; gap: 8px; align-items: center; font-family: var(--font-serif); }
 .logo-mark { color: var(--accent); }
 .sidebar nav { display: flex; flex-direction: column; gap: 2px; }
 .sidebar nav a {
@@ -107,17 +112,17 @@ a { color: var(--accent); }
 /* ---- buttons ---- */
 .primary-btn {
   background: var(--accent); border: none; color: #fff;
-  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600;
+  padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600;
 }
 .primary-btn:hover { filter: brightness(1.08); }
 .ghost-btn {
   background: var(--surface); border: 1px solid var(--border);
-  padding: 7px 12px; border-radius: 8px; cursor: pointer;
+  padding: 7px 14px; border-radius: 999px; cursor: pointer;
 }
 .ghost-btn:hover { background: var(--surface-2); }
 .danger-btn {
   background: none; border: 1px solid var(--border); color: var(--danger);
-  padding: 7px 12px; border-radius: 8px; cursor: pointer;
+  padding: 7px 14px; border-radius: 999px; cursor: pointer;
 }
 .danger-btn:hover { border-color: var(--danger); }
 .icon-btn {
@@ -130,7 +135,7 @@ a { color: var(--accent); }
 /* ---- main / cards / rows ---- */
 main#view { padding: 22px; max-width: 1080px; width: 100%; margin: 0 auto; }
 .view-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
-.view-head h1 { margin: 0; font-size: 24px; }
+.view-head h1 { margin: 0; font-size: 27px; font-family: var(--font-serif); font-weight: 700; letter-spacing: -.01em; }
 .subtitle { color: var(--text-dim); }
 
 .card {
