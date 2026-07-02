@@ -1,1 +1,67 @@
-/* Focus mode styles — owned by the journal agent (see docs/phase2-brief.md). */
+/* Focus mode styles — owned by the journal agent (see docs/phase2-brief.md).
+   Ultra-minimal, calm, generous whitespace, larger type. Theme tokens only. */
+
+.focus {
+  max-width: 640px; margin: 0 auto; padding: 24px 8px 64px;
+  display: flex; flex-direction: column;
+}
+
+.focus-back {
+  align-self: flex-start; color: var(--text-dim); text-decoration: none;
+  font-size: 14px; margin-bottom: 28px;
+}
+.focus-back:hover { color: var(--accent); }
+
+.focus-date {
+  margin: 0 0 32px; font-size: 30px; font-weight: 700; line-height: 1.2;
+}
+
+/* today's actionable list */
+.focus-list { display: flex; flex-direction: column; gap: 4px; }
+
+.focus-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 4px; border-bottom: 1px solid var(--border);
+}
+.focus-list .focus-row:last-child { border-bottom: none; }
+
+/* the check circle is styled by the shared .check class in styles.css;
+   size it up here so it reads at focus-mode scale. */
+.focus-row .check { width: 24px; height: 24px; margin-top: 0; }
+.focus-row .check.checked::after { font-size: 14px; }
+
+.focus-title { font-size: 19px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.focus-row.done .focus-title { text-decoration: line-through; color: var(--text-dim); }
+
+.focus-overdue {
+  font-size: 12px; color: var(--danger); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0;
+}
+
+/* quick add — bare, no card chrome */
+.focus-add { margin-top: 32px; }
+.focus-add input {
+  width: 100%; padding: 14px 4px; font-size: 18px;
+  border: none; border-bottom: 1px solid var(--border);
+  background: none; outline: none; color: var(--text);
+}
+.focus-add input::placeholder { color: var(--text-dim); }
+.focus-add input:focus { border-bottom-color: var(--accent); }
+
+/* all-done state */
+.focus-done { text-align: center; padding: 36px 12px; }
+.focus-done-mark {
+  width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%;
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+  color: var(--green); font-size: 30px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.focus-done-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.focus-done-copy {
+  max-width: 380px; margin: 0 auto; color: var(--text-dim); line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .focus-date { font-size: 24px; }
+  .focus-title { font-size: 17px; }
+}

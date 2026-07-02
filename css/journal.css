@@ -1,1 +1,70 @@
-/* Journal module styles — owned by the journal agent (see docs/phase2-brief.md). */
+/* Journal module styles — owned by the journal agent (see docs/phase2-brief.md).
+   Theme tokens only, so dark mode is automatic. */
+
+.jrnl-month { margin-bottom: 22px; }
+.jrnl-month-head {
+  margin: 0 0 10px; font-size: 13px; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text-dim); font-weight: 600;
+}
+.jrnl-entries { display: flex; flex-direction: column; gap: 12px; }
+
+.jrnl-entry {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+}
+.jrnl-entry.jrnl-review { border-left: 3px solid var(--accent); }
+
+.jrnl-entry-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 8px;
+}
+.jrnl-entry-head > div:first-child {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0;
+}
+.jrnl-date { color: var(--text-dim); font-size: 13px; }
+
+.jrnl-kind-daily { background: var(--surface-2); color: var(--text-dim); }
+.jrnl-kind-weekly { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+.jrnl-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+.jrnl-body { overflow-wrap: anywhere; line-height: 1.55; }
+.jrnl-body.clamp { color: var(--text); }
+
+.jrnl-more {
+  background: none; border: none; color: var(--accent); cursor: pointer;
+  padding: 6px 0 0; font-weight: 600; font-size: 13px;
+}
+.jrnl-more:hover { text-decoration: underline; }
+
+/* weekly review grid */
+.jrnl-review-grid { display: flex; flex-direction: column; gap: 12px; }
+.jrnl-review-field { }
+.jrnl-review-label {
+  font-size: 12px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px;
+}
+.jrnl-review-value { overflow-wrap: anywhere; line-height: 1.5; }
+
+/* empty / first-run state */
+.jrnl-empty { text-align: center; padding: 40px 24px; }
+.jrnl-empty-icon { font-size: 40px; line-height: 1; margin-bottom: 12px; }
+.jrnl-empty-title {
+  margin: 0 0 8px; font-size: 20px; text-transform: none;
+  letter-spacing: normal; color: var(--text); font-weight: 700;
+}
+.jrnl-empty-copy {
+  max-width: 460px; margin: 0 auto 18px; color: var(--text-dim); line-height: 1.6;
+}
+.jrnl-empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* editor modal extras */
+.jrnl-modal-kind { font-size: 15px; }
+.jrnl-field { display: flex; flex-direction: column; gap: 4px; }
+.jrnl-field .section-label { margin-bottom: 0; }
+.jrnl-field input[type="date"] {
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); outline: none; width: 100%;
+}
+.jrnl-field input[type="date"]:focus { border-color: var(--accent); }
+.jrnl-body-input { min-height: 160px; }

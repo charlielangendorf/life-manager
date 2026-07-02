@@ -22,7 +22,21 @@ Pages as-is.
   commits, sha-checked writes with automatic merge on conflict, offline queue with
   retry, and a live sync-status indicator (saved / syncing… / offline / error)
 - **Undo** for deletes, light/dark/system theme, mobile-responsive layout,
-  keyboard shortcuts (`n` new item, `/` search), JSON/CSV export
+  keyboard shortcuts (`n` new item, `/` search, `f` focus, `1–6` switch views),
+  JSON/CSV export
+
+## Phase 2 features (implemented)
+
+- **Habits** — daily/weekly check-off with current & longest streaks, last-7-days
+  strip (toggle past days), optional per-day notes, completion % over the last
+  30 days / 12 weeks, and a "Habits to check off" card on the dashboard
+- **Goals** — longer-horizon outcomes with milestone breakdowns (target dates,
+  progress bar) and **feeders**: tasks and habits link to a goal from their
+  editors and show up under it, so you can see what's moving each goal forward
+- **Journal** — free-form daily entries plus GTD-style weekly reviews (what went
+  well / what's slipping / next week's focus), grouped by month
+- **Focus mode** (`f` or the ◎ button) — a calm screen with only today's
+  actionable tasks and a bare quick-add
 
 ## Setup
 
@@ -124,7 +138,5 @@ test/smoke.mjs        Node tests for the DOM-free logic
 
 ## Roadmap (from the spec)
 
-- **Phase 2:** habits + streaks, goals linked to tasks/habits, journal/weekly
-  review, focus mode
 - **Phase 3:** contacts, reading library, finance snapshot, links vault, trip
   checklists, natural-language quick-add, drag-and-drop

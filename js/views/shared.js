@@ -15,6 +15,12 @@ export function entityRow(e) {
   const meta = [];
   if (e.priority) meta.push(`<span class="badge pri-${e.priority}">${e.priority}</span>`);
   if (e.project) meta.push(`<span class="badge badge-project">${escapeHtml(e.project)}</span>`);
+  const linkedGoal = (e.linkedTo || []).map((id) => store.get(id)).find((g) => g?.type === 'goal');
+  if (linkedGoal) {
+    const t = linkedGoal.title || '';
+    const short = t.length > 24 ? t.slice(0, 23) + '…' : t;
+    meta.push(`<span class="badge badge-goal">◎ ${escapeHtml(short)}</span>`);
+  }
   for (const t of e.tags || []) meta.push(`<span class="badge badge-tag">#${escapeHtml(t)}</span>`);
   if (when) {
     const t = timeOf(when);

@@ -77,6 +77,9 @@ export function openEditor(entity = null, defaults = {}) {
             </select>
           </label>
           <label>Project<input id="f-project" list="project-list" placeholder="e.g. coursework"></label>
+          <label>Goal
+            <select id="f-goal"></select>
+          </label>
           <label class="full">Tags<input id="f-tags" placeholder="comma, separated"></label>
           <label class="full">Repeat
             <div class="rec-wrap">
@@ -114,6 +117,22 @@ export function openEditor(entity = null, defaults = {}) {
   $('#f-priority').value = e.priority || '';
   $('#f-project').value = e.project || '';
   $('#f-tags').value = (e.tags || []).join(', ');
+
+  // Goal link: options are open goals; the value lives in linkedTo. Any goal id
+  // already linked is shown as selected even if the goal is now done, so saving
+  // doesn't silently drop it.
+  const openGoals = store.all('goal').filter((g) => g.status !== 'done');
+  const linkedGoalId = (e.linkedTo || []).find((id) => store.get(id)?.type === 'goal') || '';
+  const goalOptions = [...openGoals];
+  if (linkedGoalId && !goalOptions.some((g) => g.id === linkedGoalId)) {
+    const g = store.get(linkedGoalId);
+    if (g) goalOptions.push(g);
+  }
+  const goalSel = $('#f-goal');
+  const noneLabel = goalOptions.length ? 'None' : 'No goals yet';
+  goalSel.innerHTML = `<option value="">${noneLabel}</option>`
+    + goalOptions.map((g) => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.title)}</option>`).join('');
+  goalSel.value = linkedGoalId;
   $('#f-rec').value = rec?.freq || '';
   $('#f-rec-n').value = rec?.interval || 1;
   $('#f-rec-n').disabled = !rec;
@@ -161,6 +180,11 @@ export function openEditor(entity = null, defaults = {}) {
       date: type === 'event' ? stamp : null,
       extra: { ...(entity?.extra || {}) },
     };
+
+    // Preserve any non-goal links; replace the single goal link with the picked one.
+    const nonGoalIds = (entity?.linkedTo || []).filter((id) => store.get(id)?.type !== 'goal');
+    const pickedGoal = $('#f-goal').value;
+    patch.linkedTo = pickedGoal ? [...nonGoalIds, pickedGoal] : nonGoalIds;
 
     const freq = $('#f-rec').value;
     if (freq) {
