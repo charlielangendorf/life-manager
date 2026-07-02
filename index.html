@@ -15,6 +15,10 @@ try {
 } catch (e) {}
 </script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/habits.css">
+<link rel="stylesheet" href="css/goals.css">
+<link rel="stylesheet" href="css/journal.css">
+<link rel="stylesheet" href="css/focus.css">
 </head>
 <body>
 <div class="app">
@@ -24,6 +28,9 @@ try {
       <a href="#/dashboard" data-route="dashboard"><span class="nav-icon">☀️</span><span>Today</span></a>
       <a href="#/tasks" data-route="tasks"><span class="nav-icon">✅</span><span>Tasks</span></a>
       <a href="#/calendar" data-route="calendar"><span class="nav-icon">📅</span><span>Calendar</span></a>
+      <a href="#/habits" data-route="habits"><span class="nav-icon">🔥</span><span>Habits</span></a>
+      <a href="#/goals" data-route="goals"><span class="nav-icon">🎯</span><span>Goals</span></a>
+      <a href="#/journal" data-route="journal"><span class="nav-icon">📓</span><span>Journal</span></a>
       <a href="#/settings" data-route="settings"><span class="nav-icon">⚙️</span><span>Settings</span></a>
     </nav>
     <div class="sidebar-foot hint">GitHub-backed · local-first</div>
@@ -36,6 +43,7 @@ try {
       </div>
       <span class="spacer"></span>
       <button id="quick-add-btn" class="primary-btn" title="New item (n)">+ New</button>
+      <button id="focus-btn" class="icon-btn" title="Focus mode (f)">◎</button>
       <button id="theme-toggle" class="icon-btn" title="Toggle light/dark">◐</button>
       <span id="sync-status" class="sync-status" data-status="local" title="Sync status — click for settings">local only</span>
     </header>

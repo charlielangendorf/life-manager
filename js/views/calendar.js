@@ -15,8 +15,10 @@ let anchor = todayKey();
 const whenOf = (e) => (e.type === 'event' ? e.date : e.dueDate) || '';
 
 function dayItems(day) {
+  // Calendar shows tasks and events only — other types (habits, goals,
+  // journal) live in their own views and would open the wrong editor here.
   return store.entities
-    .filter((e) => whenOf(e).slice(0, 10) === day)
+    .filter((e) => (e.type === 'task' || e.type === 'event') && whenOf(e).slice(0, 10) === day)
     .sort((a, b) => timeOf(whenOf(a)).localeCompare(timeOf(whenOf(b))));
 }
 

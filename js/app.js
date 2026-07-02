@@ -7,9 +7,17 @@ import { escapeHtml } from './utils.js';
 import * as dashboard from './views/dashboard.js';
 import * as tasks from './views/tasks.js';
 import * as calendar from './views/calendar.js';
+import * as habits from './views/habits.js';
+import * as goals from './views/goals.js';
+import * as journal from './views/journal.js';
+import * as focus from './views/focus.js';
 import * as settings from './views/settings.js';
 
-const routes = { dashboard, tasks, calendar, settings };
+const routes = { dashboard, tasks, calendar, habits, goals, journal, focus, settings };
+
+// Where a non-task entity "lives" — search results navigate there instead of
+// opening the task editor.
+const TYPE_ROUTE = { habit: 'habits', goal: 'goals', journal: 'journal' };
 const main = document.getElementById('view');
 let current = 'dashboard';
 
@@ -57,8 +65,9 @@ statusEl.addEventListener('click', () => { location.hash = '#/settings'; });
 applyTheme();
 document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
-// ---- quick add ----
+// ---- quick add / focus mode ----
 document.getElementById('quick-add-btn').addEventListener('click', () => openEditor(null));
+document.getElementById('focus-btn').addEventListener('click', () => { location.hash = '#/focus'; });
 
 // ---- global search ----
 const searchInput = document.getElementById('global-search');
@@ -94,22 +103,34 @@ resultsEl.addEventListener('click', (ev) => {
   const entity = store.get(item.dataset.id);
   resultsEl.hidden = true;
   searchInput.value = '';
-  if (entity) openEditor(entity);
+  if (!entity) return;
+  if (entity.type === 'task' || entity.type === 'event') openEditor(entity);
+  else location.hash = '#/' + (TYPE_ROUTE[entity.type] || 'dashboard');
 });
 document.addEventListener('click', (ev) => {
   if (!ev.target.closest('.search-wrap')) resultsEl.hidden = true;
 });
 
 // ---- keyboard shortcuts ----
+const NAV_KEYS = {
+  1: 'dashboard', 2: 'tasks', 3: 'calendar', 4: 'habits', 5: 'goals', 6: 'journal',
+};
 document.addEventListener('keydown', (e) => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
   if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  const modalOpen = Boolean(document.querySelector('.modal-overlay'));
   if (e.key === '/') {
     e.preventDefault();
     searchInput.focus();
-  } else if (e.key.toLowerCase() === 'n' && !document.querySelector('.modal-overlay')) {
+  } else if (e.key.toLowerCase() === 'n' && !modalOpen) {
     e.preventDefault();
     openEditor(null);
+  } else if (e.key.toLowerCase() === 'f' && !modalOpen) {
+    e.preventDefault();
+    location.hash = '#/focus';
+  } else if (NAV_KEYS[e.key] && !modalOpen) {
+    e.preventDefault();
+    location.hash = '#/' + NAV_KEYS[e.key];
   }
 });
 
