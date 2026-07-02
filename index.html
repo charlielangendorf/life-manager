@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Manager</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
+<script>
+// Apply the saved theme before first paint to avoid a flash.
+try {
+  var s = JSON.parse(localStorage.getItem('lifeman.settings.v1')) || {};
+  var dark = s.theme === 'dark' ||
+    ((s.theme || 'system') === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-mark">◆</span> Life Manager</div>
+    <nav>
+      <a href="#/dashboard" data-route="dashboard"><span class="nav-icon">☀️</span><span>Today</span></a>
+      <a href="#/tasks" data-route="tasks"><span class="nav-icon">✅</span><span>Tasks</span></a>
+      <a href="#/calendar" data-route="calendar"><span class="nav-icon">📅</span><span>Calendar</span></a>
+      <a href="#/settings" data-route="settings"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-foot hint">GitHub-backed · local-first</div>
+  </aside>
+  <div class="main-col">
+    <header class="topbar">
+      <div class="search-wrap">
+        <input id="global-search" placeholder="Search everything…  ( / )" autocomplete="off">
+        <div id="search-results" class="search-results" hidden></div>
+      </div>
+      <span class="spacer"></span>
+      <button id="quick-add-btn" class="primary-btn" title="New item (n)">+ New</button>
+      <button id="theme-toggle" class="icon-btn" title="Toggle light/dark">◐</button>
+      <span id="sync-status" class="sync-status" data-status="local" title="Sync status — click for settings">local only</span>
+    </header>
+    <main id="view"></main>
+  </div>
+</div>
+<datalist id="project-list"></datalist>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
