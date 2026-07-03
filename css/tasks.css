@@ -1,1 +1,74 @@
-/* Tasks styles — owned by the tasks/calendar/journal agent (see docs/redesign-brief.md). */
+/* Tasks styles — owned by the tasks/calendar/journal agent (see docs/redesign-brief.md).
+   Warm, grouped-by-urgency layout. Tokens only, so dark mode is automatic. */
+
+/* ---- quieter, pill-styled filter toolbar ---- */
+.task-toolbar { gap: 8px; align-items: center; }
+.task-toolbar .flt {
+  flex-direction: row; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 6px 4px 12px;
+  font-size: 12px; color: var(--text-dim); font-weight: 500;
+}
+.task-toolbar .flt select {
+  border: none; background: none; padding: 3px 4px; border-radius: 999px;
+  color: var(--text); font-weight: 500; cursor: pointer; outline: none;
+}
+.task-toolbar .flt:focus-within { border-color: var(--accent); }
+
+/* ---- urgency bands: warm section headers instead of one flat list ---- */
+.task-band { margin-bottom: 18px; }
+.band-head {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 6px; padding: 0 4px;
+  font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-dim); font-weight: 700;
+}
+.band-count {
+  font-size: 11px; font-weight: 600; color: var(--text-dim);
+  background: var(--surface-2); border-radius: 999px; padding: 0 7px; line-height: 18px;
+}
+/* Overdue band gets a thin danger accent on its header. */
+.band-overdue .band-head { color: var(--danger); }
+.band-overdue .band-count {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.band-today .band-head { color: var(--accent); }
+
+/* The rows list within a band sits on a warm surface card. */
+.task-band .rows {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 4px 12px; overflow: hidden;
+}
+
+/* ---- rows: thin left accent gives variation without filled badges ---- */
+.row-accent { position: relative; padding-left: 12px; }
+.row-accent::before {
+  content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 3px; background: transparent;
+}
+.row-accent.pri-high::before { background: var(--danger); }
+.row-accent.pri-medium::before { background: var(--amber); }
+.row-accent.pri-low::before { background: var(--accent-soft); }
+
+.row-icon {
+  font-size: 15px; line-height: 1; margin-top: 3px; flex-shrink: 0;
+  width: 18px; text-align: center;
+}
+
+/* ---- the ONE saturated moment: the single most-pressing task ---- */
+.row.is-hero {
+  background: color-mix(in srgb, var(--highlight) 9%, transparent);
+  border-radius: 10px;
+}
+.row.is-hero::before {
+  background: var(--highlight); width: 4px; top: 6px; bottom: 6px;
+}
+.row.is-hero .row-title { font-weight: 600; }
+.row.is-hero:hover { background: color-mix(in srgb, var(--highlight) 14%, transparent); }
+
+@media (max-width: 760px) {
+  .task-toolbar { gap: 6px; }
+  .task-toolbar .flt { padding: 3px 5px 3px 10px; font-size: 11.5px; }
+}

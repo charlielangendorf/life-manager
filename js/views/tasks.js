@@ -1,6 +1,7 @@
-// Full task list with filter (project/tag/priority/status) and sort controls.
+// Full task list, grouped into urgency bands, with filter
+// (project/tag/priority/status) and sort controls.
 import { store } from '../store.js';
-import { escapeHtml } from '../utils.js';
+import { escapeHtml, todayKey, addDays } from '../utils.js';
 import { entityRow, bindRows } from './shared.js';
 import { openEditor } from '../taskModal.js';
 
@@ -26,9 +27,29 @@ function sortList(list, sort) {
   return copy;
 }
 
+// Sort the whole filtered list once, then slot each task into an urgency band.
+// A single sorted pass keeps each band internally ordered by the chosen sort.
+function bandOf(t) {
+  const due = t.dueDate ? t.dueDate.slice(0, 10) : '';
+  if (!due) return 'none';
+  const today = todayKey();
+  if (t.status !== 'done' && due < today) return 'overdue';
+  if (due === today) return 'today';
+  if (due <= addDays(today, 7)) return 'week';
+  return 'later';
+}
+
+const BANDS = [
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'today', label: 'Today' },
+  { key: 'week', label: 'This week' },
+  { key: 'later', label: 'Later' },
+  { key: 'none', label: 'No date' },
+];
+
 function sel(id, label, options, current) {
   return `
-    <label>${label}
+    <label class="flt">${label}
       <select id="${id}">
         ${options.map(([v, text]) =>
           `<option value="${escapeHtml(v)}" ${v === current ? 'selected' : ''}>${escapeHtml(text)}</option>`).join('')}
@@ -49,24 +70,42 @@ function draw(container) {
   if (state.priority) list = list.filter((t) => t.priority === state.priority);
   list = sortList(list, state.sort);
 
+  // Slot into bands (preserving sorted order within each).
+  const banded = { overdue: [], today: [], week: [], later: [], none: [] };
+  for (const t of list) banded[bandOf(t)].push(t);
+
+  // The ONE --highlight moment: the single most-pressing open task —
+  // first overdue, else first due today. Marked once per screen.
+  const heroId = banded.overdue[0]?.id || banded.today.find((t) => t.status !== 'done')?.id || null;
+
+  const sections = BANDS
+    .filter((b) => banded[b.key].length)
+    .map((b) => {
+      const rows = banded[b.key].map((t) => {
+        const row = entityRow(t);
+        return t.id === heroId ? row.replace('class="row ', 'class="row is-hero ') : row;
+      }).join('');
+      return `
+        <section class="task-band band-${b.key}">
+          <h2 class="band-head">${b.label}<span class="band-count">${banded[b.key].length}</span></h2>
+          <div class="rows">${rows}</div>
+        </section>`;
+    }).join('');
+
   container.innerHTML = `
     <div class="view-head">
       <h1>Tasks</h1>
       <span class="spacer"></span>
       <button id="new-task" class="primary-btn">+ New task</button>
     </div>
-    <div class="toolbar">
+    <div class="toolbar task-toolbar">
       ${sel('flt-show', 'Show', [['open', 'Open'], ['done', 'Completed'], ['all', 'All']], state.show)}
       ${sel('flt-project', 'Project', [['', 'All projects'], ...projects.map((p) => [p, p])], state.project)}
       ${sel('flt-tag', 'Tag', [['', 'All tags'], ...tags.map((t) => [t, '#' + t])], state.tag)}
       ${sel('flt-priority', 'Priority', [['', 'Any'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low']], state.priority)}
       ${sel('flt-sort', 'Sort by', [['due', 'Due date'], ['priority', 'Priority'], ['created', 'Newest'], ['title', 'Title']], state.sort)}
     </div>
-    <section class="card">
-      <div class="rows">
-        ${list.map(entityRow).join('') || '<div class="empty">No tasks match these filters.</div>'}
-      </div>
-    </section>`;
+    ${sections || '<div class="card"><div class="empty">No tasks match these filters.</div></div>'}`;
 }
 
 export function render(container) {

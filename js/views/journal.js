@@ -59,6 +59,14 @@ function needsTruncation(text) {
   return (text || '').length > PREVIEW_LEN;
 }
 
+// Is there a weekly review anchored to the current week?
+function hasWeeklyThisWeek(entries) {
+  const wk = startOfWeekKey(todayKey());
+  return entries.some(
+    (e) => e.extra?.kind === 'weekly-review' && startOfWeekKey(e.date) === wk,
+  );
+}
+
 // ---- entry cards -----------------------------------------------------------
 
 function dailyCard(e) {
@@ -73,7 +81,7 @@ function dailyCard(e) {
     <article class="jrnl-entry" data-id="${e.id}">
       <div class="jrnl-entry-head">
         <div>
-          <span class="badge jrnl-kind-daily">Daily</span>
+          <span class="jrnl-kind-tag jrnl-kind-daily">Daily</span>
           <span class="jrnl-date">${escapeHtml(fmtDateFull(e.date))}</span>
         </div>
         <div class="jrnl-actions">
@@ -115,7 +123,7 @@ function weeklyCard(e) {
     <article class="jrnl-entry jrnl-review" data-id="${e.id}">
       <div class="jrnl-entry-head">
         <div>
-          <span class="badge jrnl-kind-weekly">Weekly review</span>
+          <span class="jrnl-kind-tag jrnl-kind-weekly">Weekly review</span>
           <span class="jrnl-date">week of ${escapeHtml(fmtDate(startOfWeekKey(e.date)))}</span>
         </div>
         <div class="jrnl-actions">
@@ -133,8 +141,17 @@ function weeklyCard(e) {
     </article>`;
 }
 
-function entryCard(e) {
-  return e.extra?.kind === 'weekly-review' ? weeklyCard(e) : dailyCard(e);
+// A thread node wraps each entry: a pen node for daily, a warmer distinct node
+// for weekly reviews. `hero` marks the single most-recent entry (--highlight).
+function threadItem(e, hero) {
+  const weekly = e.extra?.kind === 'weekly-review';
+  const card = weekly ? weeklyCard(e) : dailyCard(e);
+  const glyph = weekly ? '★' : '✍️';
+  return `
+    <div class="jrnl-item ${weekly ? 'is-weekly' : 'is-daily'} ${hero ? 'is-hero' : ''}">
+      <span class="jrnl-node" aria-hidden="true">${glyph}</span>
+      ${card}
+    </div>`;
 }
 
 function emptyState() {
@@ -158,19 +175,26 @@ function emptyState() {
 
 function draw(container) {
   const entries = store.all('journal');
-  const groups = groupByMonth(sortEntries(entries));
+  const sorted = sortEntries(entries);
+  const groups = groupByMonth(sorted);
+
+  // The ONE --highlight moment: if this week has no weekly review yet, the
+  // "Weekly review" button is the anchor to nudge toward; otherwise it's the
+  // most recent entry's node.
+  const needsWeekly = entries.length > 0 && !hasWeeklyThisWeek(entries);
+  const heroId = needsWeekly ? null : sorted[0]?.id;
 
   container.innerHTML = `
     <div class="view-head">
       <h1>Journal</h1>
       <span class="spacer"></span>
       <button class="primary-btn" data-new-entry>+ New entry</button>
-      <button class="ghost-btn" data-new-weekly>Weekly review</button>
+      <button class="ghost-btn ${needsWeekly ? 'jrnl-weekly-cta' : ''}" data-new-weekly>Weekly review</button>
     </div>
     ${entries.length === 0 ? emptyState() : groups.map((g) => `
       <section class="jrnl-month">
         <h2 class="jrnl-month-head">${escapeHtml(g.label)}</h2>
-        <div class="jrnl-entries">${g.items.map(entryCard).join('')}</div>
+        <div class="jrnl-thread">${g.items.map((e) => threadItem(e, e.id === heroId)).join('')}</div>
       </section>`).join('')}
   `;
 }

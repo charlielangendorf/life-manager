@@ -6,10 +6,10 @@ import { todayKey, fmtDateFull, escapeHtml } from '../utils.js';
 
 const byDue = (a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999');
 
-function focusRow(e, overdue) {
+function focusRow(e, overdue, isNext) {
   const done = e.status === 'done';
   return `
-    <div class="focus-row ${done ? 'done' : ''}" data-id="${e.id}">
+    <div class="focus-row ${done ? 'done' : ''} ${isNext ? 'is-next' : ''}" data-id="${e.id}">
       <button class="check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>
       <span class="focus-title">${escapeHtml(e.title)}</span>
       ${overdue && !done ? '<span class="focus-overdue">overdue</span>' : ''}
@@ -26,8 +26,10 @@ export function render(container) {
   const actionable = [...overdue, ...dueToday];
   const overdueIds = new Set(overdue.map((t) => t.id));
 
+  // The single next task (the first row) is the ONE saturated moment — it
+  // gets a --highlight accent; every other row stays neutral and calm.
   const list = actionable.length
-    ? `<div class="focus-list">${actionable.map((t) => focusRow(t, overdueIds.has(t.id))).join('')}</div>`
+    ? `<div class="focus-list">${actionable.map((t, i) => focusRow(t, overdueIds.has(t.id), i === 0)).join('')}</div>`
     : `<div class="focus-done">
          <div class="focus-done-mark">✓</div>
          <div class="focus-done-title">All clear for today</div>

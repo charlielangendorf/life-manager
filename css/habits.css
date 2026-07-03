@@ -1,70 +1,152 @@
-/* Habits module styles — owned by the habits agent (see docs/phase2-brief.md).
-   Theme tokens only, so dark mode works automatically. */
+/* Habits module styles — owned by the habits agent (see docs/redesign-brief.md).
+   Theme tokens only, so dark mode works automatically.
 
-.habit-list { display: flex; flex-direction: column; gap: 12px; }
+   Hierarchy: one HERO habit (big, with a saturated --highlight streak band —
+   the single loud moment on this screen), then quieter compact rows. The 7-day
+   strip is the lead streak visual: filled marks = done, hollow = missed, today
+   ringed. The streak number is secondary. */
 
-.habit-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 16px;
-  box-shadow: var(--shadow);
+/* ---- shared bits ---- */
+
+/* content icon / first-letter fallback chip */
+.habit-glyph {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1;
 }
+.habit-glyph.is-letter {
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 12px; font-weight: 700;
+}
+.habit-glyph.is-hero {
+  width: 30px; height: 30px; border-radius: 9px; font-size: 18px;
+}
+.habit-glyph.is-hero.is-letter { font-size: 15px; }
 
-.habit-top { display: flex; gap: 12px; align-items: flex-start; }
-
-/* big round check-off for "today" */
+/* big round check-off (shared by hero + rows) */
 .habit-check {
-  width: 34px; height: 34px; flex-shrink: 0; margin-top: 2px;
+  width: 30px; height: 30px; flex-shrink: 0; margin-top: 1px;
   border-radius: 50%; border: 2px solid var(--border);
   background: transparent; cursor: pointer; position: relative;
   transition: background .12s, border-color .12s;
 }
 .habit-check:hover { border-color: var(--accent); }
+.habit-check.is-hero { width: 38px; height: 38px; }
 .habit-check-mark {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  color: transparent; font-size: 16px; font-weight: 700;
+  color: transparent; font-size: 15px; font-weight: 700;
 }
+.habit-check.is-hero .habit-check-mark { font-size: 18px; }
 .habit-check.on { background: var(--green); border-color: var(--green); }
 .habit-check.on .habit-check-mark { color: #fff; }
 
-.habit-body { min-width: 0; flex: 1; }
-.habit-title { font-weight: 600; font-size: 15.5px; overflow-wrap: anywhere; }
-.habit-notes { color: var(--text-dim); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
-.habit-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-.habit-streak { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber); font-weight: 600; }
+.habit-notes { color: var(--text-dim); font-size: 13px; margin-top: 3px; overflow-wrap: anywhere; }
+.habit-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+.habit-meta:empty { display: none; }
 
-.habit-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.habit-actions { display: flex; gap: 2px; flex-shrink: 0; align-self: flex-start; }
 .habit-actions .icon-btn.on { background: var(--accent-soft); color: var(--accent); }
 
-/* last-7-days strip */
-.habit-lower {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+/* ---- the 7-day strip: the lead streak visual ---- */
+.habit-strip { display: flex; gap: 7px; }
+.habit-mark {
+  width: 26px; border: none; background: none; cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--text-dim); position: relative;
 }
-.habit-strip { display: flex; gap: 6px; }
-.habit-dot {
-  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
-  background: var(--surface-2); cursor: pointer; position: relative;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: var(--text-dim); font-weight: 600;
-  transition: background .12s, border-color .12s, color .12s;
+.habit-mark-fill {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--border); background: transparent;
+  transition: background .14s, border-color .14s, transform .1s;
 }
-.habit-dot:hover { border-color: var(--accent); }
-.habit-dot.on { background: var(--green); border-color: var(--green); color: #fff; }
-.habit-dot.is-today { box-shadow: inset 0 0 0 1px var(--accent); }
-.habit-dot.is-today:not(.on) { color: var(--accent); }
-.habit-dot-note {
-  position: absolute; top: 1px; right: 3px; font-size: 12px; line-height: 1;
-  color: var(--accent);
+.habit-mark:hover .habit-mark-fill { border-color: var(--accent); }
+.habit-mark.on .habit-mark-fill { background: var(--accent); border-color: var(--accent); }
+.habit-mark.off .habit-mark-fill { background: transparent; }
+.habit-mark.is-today .habit-mark-fill { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+.habit-mark.is-today.on .habit-mark-fill { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+.habit-mark-day { font-size: 10px; font-weight: 600; text-transform: uppercase; }
+.habit-mark.is-today .habit-mark-day { color: var(--accent); }
+.habit-mark-note {
+  position: absolute; top: -2px; right: 2px; font-size: 16px; line-height: 0;
+  color: var(--amber);
 }
-.habit-dot.on .habit-dot-note { color: #fff; }
+
+/* hero strip: slightly larger, more prominent marks */
+.habit-strip.is-hero { gap: 9px; }
+.habit-strip.is-hero .habit-mark { width: 30px; }
+.habit-strip.is-hero .habit-mark-fill { width: 26px; height: 26px; }
+.habit-strip.is-hero .habit-mark.on .habit-mark-fill { background: var(--highlight); border-color: var(--highlight); }
+.habit-strip.is-hero .habit-mark.is-today .habit-mark-fill { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--highlight); }
 
 .habit-check-text { font-size: 12.5px; color: var(--accent); font-weight: 600; }
 .habit-check-text.muted { color: var(--text-dim); font-weight: 500; }
 
-/* inline note editor for today's entry */
+/* compact streak chip on quiet rows */
+.habit-streak-chip {
+  font-size: 11.5px; padding: 1px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber);
+  font-weight: 600; white-space: nowrap;
+}
+
+/* ==================================================================
+   HERO card — the still-active habit with the best current streak.
+   Its streak band is the screen's single saturated --highlight moment.
+   ================================================================== */
+.habit-hero {
+  display: flex; align-items: stretch;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden; margin-bottom: 18px;
+}
+.habit-hero-band {
+  flex-shrink: 0; width: 116px;
+  background: var(--highlight); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 18px 10px; text-align: center;
+}
+.habit-hero-flame { font-size: 24px; line-height: 1; filter: saturate(1.1); }
+.habit-hero-streak-n { font-family: var(--font-serif); font-size: 40px; font-weight: 700; line-height: 1; }
+.habit-hero-streak-l { font-size: 11px; line-height: 1.25; opacity: .92; letter-spacing: .01em; }
+
+.habit-hero-body { flex: 1; min-width: 0; padding: 16px 18px; }
+.habit-hero-top { display: flex; gap: 13px; align-items: flex-start; }
+.habit-hero-main { min-width: 0; flex: 1; }
+.habit-hero-title {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--font-serif); font-weight: 700; font-size: 20px;
+  overflow-wrap: anywhere; letter-spacing: -.01em;
+}
+.habit-hero-lower {
+  display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+}
+
+/* ==================================================================
+   Quiet compact rows for the remaining habits.
+   ================================================================== */
+.habit-rest-label {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-dim); font-weight: 600; margin: 4px 2px 8px;
+}
+.habit-rows {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+}
+.habit-row { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.habit-rows .habit-row:last-child { border-bottom: none; }
+.habit-row.is-done { background: color-mix(in srgb, var(--green) 5%, transparent); }
+.habit-row-top { display: flex; gap: 12px; align-items: center; }
+.habit-row-main { min-width: 0; flex: 1; }
+.habit-row-title {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-weight: 600; font-size: 15px; overflow-wrap: anywhere;
+}
+.habit-row .habit-strip { flex-shrink: 0; }
+
+/* ---- inline note editor for today's entry (shared) ---- */
 .habit-note-edit {
   display: flex; gap: 8px; align-items: center;
-  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
 }
 .habit-note-input {
   flex: 1; padding: 7px 10px; border-radius: 8px;
@@ -72,24 +154,49 @@
 }
 .habit-note-input:focus { border-color: var(--accent); }
 
-/* expandable stats panel */
+/* ==================================================================
+   Expandable stats — asymmetric: a warm completion arc leads, with
+   the numbers as supporting text (not four identical tiles).
+   ================================================================== */
 .habit-stats {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+  display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
 }
-.habit-stat {
-  background: var(--surface-2); border-radius: 8px; padding: 10px;
-  display: flex; flex-direction: column; gap: 2px; text-align: center;
+.habit-arc { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+.habit-arc-svg { width: 88px; height: 88px; transform: rotate(-90deg); }
+.habit-arc-track { fill: none; stroke: var(--surface-2); stroke-width: 8; }
+.habit-arc-fill {
+  fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round;
+  transition: stroke-dasharray .4s ease;
 }
-.habit-stat-n { font-size: 20px; font-weight: 700; }
-.habit-stat-l { font-size: 11px; color: var(--text-dim); }
+.habit-arc-label {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+}
+.habit-arc-pct { font-family: var(--font-serif); font-size: 22px; font-weight: 700; line-height: 1; }
+.habit-arc-pct small { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.habit-arc-sub { font-size: 9px; color: var(--text-dim); margin-top: 2px; line-height: 1; }
 
-/* first-run empty state */
-.habit-empty { text-align: center; padding: 26px 12px; }
-.habit-empty-icon { font-size: 34px; margin-bottom: 6px; }
-.habit-empty p { color: var(--text-dim); max-width: 340px; margin: 0 auto 14px; }
+.habit-stat-facts { display: flex; gap: 22px; flex-wrap: wrap; }
+.habit-fact { display: flex; flex-direction: column; gap: 1px; }
+.habit-fact-n { font-size: 22px; font-weight: 700; line-height: 1; }
+.habit-fact-slash { font-size: 14px; font-weight: 500; color: var(--text-dim); }
+.habit-fact-l { font-size: 11px; color: var(--text-dim); }
 
-/* dashboard "Habits" section */
+/* ---- first-run empty state ---- */
+.habit-empty { text-align: center; padding: 30px 12px; }
+.habit-empty-icon { font-size: 40px; margin-bottom: 8px; }
+.habit-empty-head {
+  font-family: var(--font-serif); font-size: 20px; font-weight: 700;
+  color: var(--text); margin: 0 0 6px; text-transform: none; letter-spacing: -.01em;
+}
+.habit-empty p { color: var(--text-dim); max-width: 380px; margin: 0 auto 16px; }
+
+/* ==================================================================
+   Dashboard "Habits" section — the dashboard agent renders its own
+   markup now, but these classes are kept intact to avoid churn during
+   integration. Do not rely on them from this view.
+   ================================================================== */
 .dash-habits { display: flex; flex-direction: column; }
 .dash-habit-row {
   display: flex; gap: 12px; align-items: center; padding: 9px 6px;
@@ -112,7 +219,24 @@
 .dash-habit-title { font-weight: 500; overflow-wrap: anywhere; }
 .dash-habit-sub { font-size: 12px; color: var(--text-dim); }
 
+/* ---- mobile ---- */
 @media (max-width: 760px) {
-  .habit-stats { grid-template-columns: repeat(2, 1fr); }
-  .habit-dot { width: 34px; height: 34px; }
+  .habit-hero { flex-direction: column; }
+  .habit-hero-band {
+    width: 100%; flex-direction: row; gap: 10px; padding: 12px 16px; justify-content: flex-start;
+  }
+  .habit-hero-streak-n { font-size: 30px; }
+  .habit-hero-streak-l { text-align: left; }
+  .habit-hero-streak-l br { display: none; }
+  .habit-hero-body { padding: 14px 16px; }
+
+  /* rows: let the strip drop to its own line under the title */
+  .habit-row-top { flex-wrap: wrap; }
+  .habit-row-main { flex-basis: 60%; }
+  .habit-row .habit-strip { order: 3; width: 100%; margin-top: 6px; justify-content: space-between; }
+
+  .habit-strip { gap: 5px; }
+  .habit-mark { width: 100%; }
+  .habit-stats { gap: 16px; }
+  .habit-stat-facts { gap: 16px; }
 }

@@ -1,18 +1,56 @@
-/* Journal module styles — owned by the journal agent (see docs/phase2-brief.md).
-   Theme tokens only, so dark mode is automatic. */
+/* Journal styles — owned by the tasks/calendar/journal agent (see docs/redesign-brief.md).
+   A gentle vertical thread per month: a thin rail connects entries, each with a
+   node — a pen for daily, a warmer star for weekly reviews. Tokens only, so
+   dark mode is automatic. */
 
-.jrnl-month { margin-bottom: 22px; }
+.jrnl-month { margin-bottom: 26px; }
 .jrnl-month-head {
-  margin: 0 0 10px; font-size: 13px; text-transform: uppercase;
+  margin: 0 0 12px; font-size: 13px; text-transform: uppercase;
   letter-spacing: .04em; color: var(--text-dim); font-weight: 600;
 }
-.jrnl-entries { display: flex; flex-direction: column; gap: 12px; }
 
+/* ---- the vertical thread ---- */
+.jrnl-thread { position: relative; padding-left: 34px; }
+.jrnl-thread::before {
+  content: ''; position: absolute; left: 13px; top: 10px; bottom: 10px;
+  width: 2px; border-radius: 2px; background: var(--border);
+}
+
+.jrnl-item { position: relative; margin-bottom: 14px; }
+.jrnl-item:last-child { margin-bottom: 0; }
+
+/* node on the rail */
+.jrnl-node {
+  position: absolute; left: -34px; top: 12px;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; line-height: 1;
+  background: var(--surface); border: 2px solid var(--accent);
+  z-index: 1;
+}
+/* weekly reviews are the anchor moments: warmer, slightly larger presence */
+.jrnl-item.is-weekly .jrnl-node {
+  background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
+  width: 30px; height: 30px; left: -35px; font-size: 14px;
+}
+
+/* The ONE saturated moment: the most recent entry's node. */
+.jrnl-item.is-hero .jrnl-node {
+  background: var(--highlight); border-color: var(--highlight); color: #fff;
+}
+
+/* ---- entry cards ---- */
 .jrnl-entry {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
 }
-.jrnl-entry.jrnl-review { border-left: 3px solid var(--accent); }
+.jrnl-item.is-weekly .jrnl-entry {
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface));
+}
+.jrnl-item.is-hero .jrnl-entry {
+  border-color: color-mix(in srgb, var(--highlight) 45%, var(--border));
+}
 
 .jrnl-entry-head {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -23,8 +61,12 @@
 }
 .jrnl-date { color: var(--text-dim); font-size: 13px; }
 
-.jrnl-kind-daily { background: var(--surface-2); color: var(--text-dim); }
-.jrnl-kind-weekly { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+/* kind tags: quiet inline labels, not filled pills */
+.jrnl-kind-tag {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.jrnl-kind-daily { color: var(--text-dim); }
+.jrnl-kind-weekly { color: var(--accent); }
 
 .jrnl-actions { display: flex; gap: 2px; flex-shrink: 0; }
 
@@ -39,26 +81,33 @@
 
 /* weekly review grid */
 .jrnl-review-grid { display: flex; flex-direction: column; gap: 12px; }
-.jrnl-review-field { }
 .jrnl-review-label {
   font-size: 12px; font-weight: 600; color: var(--text-dim);
   text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px;
 }
 .jrnl-review-value { overflow-wrap: anywhere; line-height: 1.5; }
 
-/* empty / first-run state */
+/* ---- highlight the "Weekly review" CTA when this week has none ---- */
+.jrnl-weekly-cta {
+  border-color: var(--highlight); color: var(--highlight); font-weight: 600;
+  background: color-mix(in srgb, var(--highlight) 8%, var(--surface));
+}
+.jrnl-weekly-cta:hover { background: color-mix(in srgb, var(--highlight) 14%, var(--surface)); }
+
+/* ---- empty / first-run state ---- */
 .jrnl-empty { text-align: center; padding: 40px 24px; }
 .jrnl-empty-icon { font-size: 40px; line-height: 1; margin-bottom: 12px; }
 .jrnl-empty-title {
-  margin: 0 0 8px; font-size: 20px; text-transform: none;
+  margin: 0 0 8px; font-size: 22px; text-transform: none;
   letter-spacing: normal; color: var(--text); font-weight: 700;
+  font-family: var(--font-serif);
 }
 .jrnl-empty-copy {
   max-width: 460px; margin: 0 auto 18px; color: var(--text-dim); line-height: 1.6;
 }
 .jrnl-empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
-/* editor modal extras */
+/* ---- editor modal extras ---- */
 .jrnl-modal-kind { font-size: 15px; }
 .jrnl-field { display: flex; flex-direction: column; gap: 4px; }
 .jrnl-field .section-label { margin-bottom: 0; }
@@ -68,3 +117,10 @@
 }
 .jrnl-field input[type="date"]:focus { border-color: var(--accent); }
 .jrnl-body-input { min-height: 160px; }
+
+@media (max-width: 760px) {
+  .jrnl-thread { padding-left: 28px; }
+  .jrnl-thread::before { left: 11px; }
+  .jrnl-node { width: 24px; height: 24px; left: -28px; font-size: 12px; }
+  .jrnl-item.is-weekly .jrnl-node { width: 26px; height: 26px; left: -29px; }
+}

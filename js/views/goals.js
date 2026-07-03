@@ -1,9 +1,18 @@
 // Goals view: a card per goal with milestone progress and its "feeders"
 // (tasks/habits whose linkedTo points at the goal). Own create/edit modal with
-// a dynamic milestones editor. Deletes are undoable. See docs/phase2-brief.md.
+// a dynamic milestones editor. Deletes are undoable. See docs/redesign-brief.md.
+//
+// Layout (redesign): milestones become a mini vertical TIMELINE inside each goal
+// (connecting line + nodes; done nodes filled warm, the next undone node
+// emphasized) rather than a flat checkbox list. Goal cards carry hierarchy — the
+// most urgent open goal (nearest target / most complete) is a HERO card with
+// more visual weight; the rest are quieter. The screen's single saturated
+// (--highlight) moment is the "Next up" banner: the one next milestone across
+// all goals. Feeders stay as quiet supporting detail with iconFor glyphs.
 import { store } from '../store.js';
-import { uid, escapeHtml, relativeDue } from '../utils.js';
+import { uid, escapeHtml, relativeDue, parseDate, todayKey } from '../utils.js';
 import { showToast } from '../toast.js';
+import { iconFor } from '../icons.js';
 
 // UI state kept at module level so it survives store-triggered re-renders.
 const expanded = new Set();
@@ -32,6 +41,39 @@ export function feedersFor(goalId) {
   };
 }
 
+// ---- internal helpers (not exported; ordering + "next milestone" logic) ----
+
+// The first not-yet-done milestone in a goal (timeline order), or null.
+function nextMilestone(goal) {
+  return (goal?.extra?.milestones || []).find((mi) => !mi.done) || null;
+}
+
+// Rank open goals so one hero rises to the top. A goal is "hotter" when it has a
+// nearer target date; goals without a date fall back to completion. We combine
+// both into a single score (lower = more urgent → sorts first).
+function urgencyScore(goal) {
+  const stats = milestoneStats(goal);
+  if (goal.dueDate) {
+    const days = Math.round((parseDate(goal.dueDate) - parseDate(todayKey())) / 86400000);
+    // Overdue and near-term goals score lowest; completion nudges ties.
+    return days - stats.pct / 100;
+  }
+  // No date: use "least complete but started" — closer to done pulls it up a bit,
+  // but a dated goal always outranks an undated one (large offset keeps it back).
+  return 10000 - stats.pct;
+}
+
+// Choose the goal to feature + the single next milestone across all open goals
+// (the one saturated moment). We prefer the hero's own next milestone; if the
+// hero has none, we take the earliest next milestone from any open goal.
+function pickHighlight(openGoals) {
+  for (const g of openGoals) {
+    const mi = nextMilestone(g);
+    if (mi) return { goal: g, milestone: mi };
+  }
+  return null;
+}
+
 // ---- rendering ----
 
 function progressBar(pct) {
@@ -41,87 +83,148 @@ function progressBar(pct) {
     </div>`;
 }
 
+// Content glyph for a goal, or a tinted first-letter chip fallback.
+function goalGlyph(goal, hero) {
+  const icon = iconFor(goal);
+  const cls = hero ? 'goal-glyph is-hero' : 'goal-glyph';
+  if (icon) return `<span class="${cls}" aria-hidden="true">${icon}</span>`;
+  const letter = (goal.title || '?').trim().charAt(0).toUpperCase() || '?';
+  return `<span class="${cls} is-letter" aria-hidden="true">${escapeHtml(letter)}</span>`;
+}
+
+// Quiet feeder summary: small counts with a tinted icon, supporting detail only.
 function feederSummary(f) {
   const bits = [];
-  bits.push(`<span class="badge">${f.openTasks.length} open</span>`);
-  if (f.doneTasks.length) bits.push(`<span class="badge">${f.doneTasks.length} done</span>`);
-  if (f.habits.length) bits.push(`<span class="badge">${f.habits.length} habit${f.habits.length === 1 ? '' : 's'}</span>`);
+  if (f.openTasks.length) bits.push(`<span class="goal-feed-chip">✔ ${f.openTasks.length} open task${f.openTasks.length === 1 ? '' : 's'}</span>`);
+  if (f.doneTasks.length) bits.push(`<span class="goal-feed-chip is-quiet">${f.doneTasks.length} done</span>`);
+  if (f.habits.length) bits.push(`<span class="goal-feed-chip">↻ ${f.habits.length} habit${f.habits.length === 1 ? '' : 's'}</span>`);
+  if (!bits.length) return '';
   return `<div class="goal-feeders">${bits.join('')}</div>`;
 }
 
-function milestoneDetail(goal) {
+// Milestones as a mini vertical timeline. Done nodes are filled warm; the first
+// undone node is emphasized (the goal's own "next" marker). Toggling is
+// unchanged: data-action="toggle-milestone" + data-mid.
+function milestoneTimeline(goal) {
   const list = goal.extra?.milestones || [];
   if (!list.length) return '<div class="empty">No milestones yet.</div>';
+  const nextId = nextMilestone(goal)?.id;
   return `
-    <ul class="goal-milestones">
-      ${list.map((mi) => `
-        <li class="goal-milestone ${mi.done ? 'done' : ''}">
-          <button class="check ${mi.done ? 'checked' : ''}" data-action="toggle-milestone"
-            data-mid="${escapeHtml(mi.id)}" aria-label="Toggle milestone"></button>
-          <span class="goal-milestone-title">${escapeHtml(mi.title)}</span>
-          ${mi.targetDate ? `<span class="badge badge-due">${relativeDue(mi.targetDate)}</span>` : ''}
-        </li>`).join('')}
-    </ul>`;
+    <ol class="goal-timeline">
+      ${list.map((mi) => {
+        const isNext = mi.id === nextId;
+        return `
+        <li class="goal-tl-item ${mi.done ? 'is-done' : ''} ${isNext ? 'is-next' : ''}">
+          <button class="goal-tl-node" data-action="toggle-milestone"
+            data-mid="${escapeHtml(mi.id)}"
+            aria-pressed="${mi.done}" aria-label="Toggle milestone ${escapeHtml(mi.title)}"></button>
+          <div class="goal-tl-body">
+            <span class="goal-tl-title">${escapeHtml(mi.title)}</span>
+            ${mi.targetDate ? `<span class="badge badge-due">${escapeHtml(relativeDue(mi.targetDate))}</span>` : ''}
+          </div>
+        </li>`;
+      }).join('')}
+    </ol>`;
 }
 
 function feederDetail(f) {
-  const section = (label, items, render) => (items.length
+  const li = (e) => `<li><span class="goal-link-glyph" aria-hidden="true">${iconFor(e) || '·'}</span>${escapeHtml(e.title)}</li>`;
+  const section = (label, items) => (items.length
     ? `<div class="goal-feeder-group">
          <div class="section-label">${label}</div>
-         <ul class="goal-links">${items.map(render).join('')}</ul>
+         <ul class="goal-links">${items.map(li).join('')}</ul>
        </div>`
     : '');
-  const li = (e) => `<li>${escapeHtml(e.title)}</li>`;
   return `
-    ${section(`Open tasks (${f.openTasks.length})`, f.openTasks, li)}
-    ${section(`Habits (${f.habits.length})`, f.habits, li)}
+    ${section(`Open tasks (${f.openTasks.length})`, f.openTasks)}
+    ${section(`Habits (${f.habits.length})`, f.habits)}
     ${(!f.openTasks.length && !f.habits.length)
       ? '<div class="empty">Nothing links to this goal yet.</div>' : ''}`;
 }
 
-function goalCard(goal) {
+// A goal card. `hero` gives it more visual weight (accent rail, larger serif
+// title, glyph); quiet cards are lighter. Behavior is identical across both.
+function goalCard(goal, hero = false) {
   const done = goal.status === 'done';
   const stats = milestoneStats(goal);
   const f = feedersFor(goal.id);
   const isOpen = expanded.has(goal.id);
+  const next = nextMilestone(goal);
 
   const meta = [];
-  if (goal.dueDate) meta.push(`<span class="badge badge-due">${relativeDue(goal.dueDate)}</span>`);
+  if (goal.dueDate) meta.push(`<span class="badge badge-due">${escapeHtml(relativeDue(goal.dueDate))}</span>`);
   if (stats.total) meta.push(`<span class="badge">${stats.done}/${stats.total} milestones</span>`);
 
+  const cls = ['card', 'goal-card'];
+  if (hero) cls.push('is-hero');
+  if (done) cls.push('goal-done');
+
   return `
-    <section class="card goal-card ${done ? 'goal-done' : ''}" data-id="${escapeHtml(goal.id)}">
+    <section class="${cls.join(' ')}" data-id="${escapeHtml(goal.id)}">
       <div class="goal-head">
         <button class="goal-expand" data-action="expand" aria-expanded="${isOpen}"
           aria-label="Toggle details">${isOpen ? '▾' : '▸'}</button>
+        ${goalGlyph(goal, hero)}
         <div class="goal-headmain">
           <div class="goal-title">${escapeHtml(goal.title)}</div>
           ${meta.length ? `<div class="row-meta">${meta.join('')}</div>` : ''}
         </div>
         <span class="spacer"></span>
-        <button class="ghost-btn" data-action="edit">Edit</button>
-        <button class="ghost-btn" data-action="toggle-done">${done ? 'Reopen' : 'Mark done'}</button>
+        <div class="goal-head-actions">
+          <button class="icon-btn" data-action="edit" title="Edit goal" aria-label="Edit goal">✏️</button>
+          <button class="ghost-btn goal-done-btn" data-action="toggle-done">${done ? 'Reopen' : 'Mark done'}</button>
+        </div>
       </div>
       ${goal.notes ? `<div class="goal-notes">${escapeHtml(goal.notes)}</div>` : ''}
-      ${stats.total ? progressBar(stats.pct) : ''}
+      ${stats.total ? `
+        <div class="goal-progress">
+          ${progressBar(stats.pct)}
+          <span class="goal-progress-pct">${stats.pct}%</span>
+        </div>` : ''}
+      ${(!isOpen && !done && next) ? `
+        <div class="goal-nextline">
+          <span class="goal-nextline-label">Next</span>
+          <span class="goal-nextline-title">${escapeHtml(next.title)}</span>
+          ${next.targetDate ? `<span class="badge badge-due">${escapeHtml(relativeDue(next.targetDate))}</span>` : ''}
+        </div>` : ''}
       ${feederSummary(f)}
       ${isOpen ? `
         <div class="goal-detail">
           <div class="section-label">Milestones</div>
-          ${milestoneDetail(goal)}
+          ${milestoneTimeline(goal)}
           ${feederDetail(f)}
         </div>` : ''}
     </section>`;
+}
+
+// The one saturated moment: a "Next up" banner spotlighting the single next
+// milestone across all open goals. Uses --highlight exactly once on this screen.
+function nextUpBanner(hl) {
+  const { goal, milestone } = hl;
+  return `
+    <div class="goal-nextup" data-id="${escapeHtml(goal.id)}">
+      <span class="goal-nextup-kicker">Next up</span>
+      <div class="goal-nextup-main">
+        <div class="goal-nextup-title">${escapeHtml(milestone.title)}</div>
+        <div class="goal-nextup-sub">
+          toward <strong>${escapeHtml(goal.title)}</strong>${milestone.targetDate
+            ? ` · <span class="goal-nextup-due">${escapeHtml(relativeDue(milestone.targetDate))}</span>` : ''}
+        </div>
+      </div>
+      <button class="goal-nextup-check" data-action="toggle-milestone" data-mid="${escapeHtml(milestone.id)}"
+        aria-label="Complete milestone ${escapeHtml(milestone.title)}">Done</button>
+    </div>`;
 }
 
 function emptyState() {
   return `
     <section class="card goal-empty">
       <div class="empty">
+        <div class="goal-empty-icon" aria-hidden="true">🎯</div>
         <h2>No goals yet</h2>
-        <p class="hint">Goals are the bigger outcomes you're working toward. Break each
+        <p>Goals are the bigger outcomes you're working toward. Break each
           one into milestones, then link tasks and habits to it from their editors —
-          they'll show up here as "feeders" so you can see what's actually moving the
+          they'll show up here as feeders so you can see what's actually moving the
           goal forward.</p>
         <button id="new-goal-empty" class="primary-btn">+ New goal</button>
       </div>
@@ -130,7 +233,9 @@ function emptyState() {
 
 function draw(container) {
   const goals = store.all('goal');
-  const open = goals.filter((g) => g.status !== 'done');
+  const open = goals
+    .filter((g) => g.status !== 'done')
+    .sort((a, b) => urgencyScore(a) - urgencyScore(b) || a.title.localeCompare(b.title));
   const doneGoals = goals.filter((g) => g.status === 'done');
 
   if (!goals.length) {
@@ -144,21 +249,30 @@ function draw(container) {
     return;
   }
 
+  const highlight = pickHighlight(open);
+  // The hero is the top-ranked open goal; the rest render quieter.
+  const heroGoal = open[0] || null;
+  const rest = open.slice(1);
+
   container.innerHTML = `
     <div class="view-head">
       <h1>Goals</h1>
       <span class="spacer"></span>
       <button id="new-goal" class="primary-btn">+ New goal</button>
     </div>
-    <div class="goal-list">
-      ${open.map(goalCard).join('') || '<div class="empty">No active goals — nice work.</div>'}
-    </div>
+    ${highlight ? nextUpBanner(highlight) : ''}
+    ${open.length ? `
+      <div class="goal-list">
+        ${heroGoal ? goalCard(heroGoal, true) : ''}
+        ${rest.map((g) => goalCard(g, false)).join('')}
+      </div>`
+      : '<div class="empty">No active goals — nice work.</div>'}
     ${doneGoals.length ? `
       <div class="goal-completed">
         <button id="toggle-completed" class="goal-completed-head" aria-expanded="${completedOpen}">
           ${completedOpen ? '▾' : '▸'} Completed (${doneGoals.length})
         </button>
-        ${completedOpen ? `<div class="goal-list">${doneGoals.map(goalCard).join('')}</div>` : ''}
+        ${completedOpen ? `<div class="goal-list">${doneGoals.map((g) => goalCard(g, false)).join('')}</div>` : ''}
       </div>` : ''}`;
 }
 
@@ -171,6 +285,15 @@ export function render(container) {
     if (ev.target.closest('#toggle-completed')) {
       completedOpen = !completedOpen;
       draw(container);
+      return;
+    }
+
+    // The "Next up" banner shares the toggle-milestone action but isn't a card.
+    const banner = ev.target.closest('.goal-nextup[data-id]');
+    if (banner && ev.target.closest('[data-action="toggle-milestone"]')) {
+      const goal = store.get(banner.dataset.id);
+      const mid = ev.target.closest('[data-mid]')?.dataset.mid;
+      if (goal && mid) toggleMilestone(goal, mid);
       return;
     }
 
@@ -191,13 +314,20 @@ export function render(container) {
       store.update(goal.id, { status: next });
     } else if (action === 'toggle-milestone') {
       const mid = ev.target.closest('[data-mid]')?.dataset.mid;
-      const list = (goal.extra?.milestones || []).map((mi) =>
-        (mi.id === mid ? { ...mi, done: !mi.done } : mi));
-      store.update(goal.id, { extra: { ...goal.extra, milestones: list } });
+      toggleMilestone(goal, mid);
     }
   });
 
   draw(container);
+}
+
+// Flip a single milestone's done flag, writing back the full milestones array
+// (identical data shape to before).
+function toggleMilestone(goal, mid) {
+  if (!mid) return;
+  const list = (goal.extra?.milestones || []).map((mi) =>
+    (mi.id === mid ? { ...mi, done: !mi.done } : mi));
+  store.update(goal.id, { extra: { ...goal.extra, milestones: list } });
 }
 
 // ---- goal editor modal (own build; mirrors taskModal structure/classes) ----

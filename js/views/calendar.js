@@ -4,15 +4,17 @@
 import { store } from '../store.js';
 import {
   todayKey, addDays, addMonths, startOfWeekKey, escapeHtml,
-  timeOf, fmtTime, fmtDate, fmtDateFull, fmtMonthYear, WEEKDAYS,
+  timeOf, fmtTime, fmtDate, fmtDateFull, fmtMonthYear, WEEKDAYS, parseDate,
 } from '../utils.js';
 import { entityRow, bindRows } from './shared.js';
 import { openEditor } from '../taskModal.js';
+import { iconFor } from '../icons.js';
 
 let mode = 'month';
 let anchor = todayKey();
 
 const whenOf = (e) => (e.type === 'event' ? e.date : e.dueDate) || '';
+const isWeekend = (day) => { const g = parseDate(day).getDay(); return g === 0 || g === 6; };
 
 function dayItems(day) {
   // Calendar shows tasks and events only — other types (habits, goals,
@@ -24,10 +26,11 @@ function dayItems(day) {
 
 function chip(e) {
   const t = timeOf(whenOf(e));
+  const icon = iconFor(e);
   return `
     <div class="cal-chip ${e.type} ${e.status === 'done' ? 'done' : ''} pri-${e.priority || 'none'}"
          data-id="${e.id}" title="${escapeHtml(e.title)}">
-      ${t ? `<b>${fmtTime(t)}</b> ` : ''}${escapeHtml(e.title)}
+      ${icon ? `<span class="cal-chip-icon" aria-hidden="true">${icon}</span>` : ''}${t ? `<b>${fmtTime(t)}</b> ` : ''}${escapeHtml(e.title)}
     </div>`;
 }
 
@@ -62,7 +65,7 @@ function monthGrid() {
     const items = dayItems(day);
     const shown = items.slice(0, 3);
     cells.push(`
-      <div class="cal-cell ${day.slice(0, 7) === month ? '' : 'dim'} ${day === today ? 'today' : ''}"
+      <div class="cal-cell ${day.slice(0, 7) === month ? '' : 'dim'} ${day === today ? 'today' : ''} ${isWeekend(day) ? 'weekend' : ''}"
            data-day="${day}">
         <div class="cal-daynum" title="Open day view">${Number(day.slice(8))}</div>
         ${shown.map(chip).join('')}
@@ -80,26 +83,44 @@ function weekGrid() {
   const cols = [];
   for (let i = 0; i < 7; i++) {
     const day = addDays(start, i);
+    const items = dayItems(day);
+    // Each day column is a mini vertical sequence: a thin rail threads the
+    // chips as ordered nodes, rather than a plain stack.
+    const seq = items.length
+      ? `<div class="cal-week-seq">${items.map((e) => `
+          <div class="cal-week-node">${chip(e)}</div>`).join('')}</div>`
+      : '<div class="cal-week-empty">—</div>';
     cols.push(`
-      <div class="cal-week-col ${day === today ? 'today' : ''}" data-day="${day}">
+      <div class="cal-week-col ${day === today ? 'today' : ''} ${isWeekend(day) ? 'weekend' : ''}" data-day="${day}">
         <div class="cal-week-head" title="Open day view">
           <span class="dow">${WEEKDAYS[i]}</span>
           <span class="dnum">${Number(day.slice(8))}</span>
         </div>
-        <div class="cal-week-items">${dayItems(day).map(chip).join('')}</div>
+        ${seq}
         <button class="cal-add" data-day="${day}" title="Add task on ${day}">+</button>
       </div>`);
   }
   return `<div class="cal-week">${cols.join('')}</div>`;
 }
 
+// Day view: a proper vertical timeline. Timed items get a time label; untimed
+// ones collect under an "Anytime" node. Rows still use entityRow so toggle +
+// open-editor keep working through bindRows.
 function dayList() {
   const items = dayItems(anchor);
+  const body = items.length
+    ? `<div class="cal-timeline">${items.map((e) => {
+        const t = timeOf(whenOf(e));
+        return `
+          <div class="tl-item">
+            <div class="tl-time">${t ? fmtTime(t) : 'Anytime'}</div>
+            <div class="tl-row">${entityRow(e)}</div>
+          </div>`;
+      }).join('')}</div>`
+    : '<div class="empty">Nothing scheduled this day.</div>';
   return `
-    <section class="card">
-      <div class="rows">
-        ${items.map(entityRow).join('') || '<div class="empty">Nothing scheduled this day.</div>'}
-      </div>
+    <section class="card cal-day">
+      ${body}
       <div class="btn-row">
         <button class="ghost-btn cal-add" data-day="${anchor}">+ Add task on this day</button>
       </div>

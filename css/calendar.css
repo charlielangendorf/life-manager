@@ -1,1 +1,72 @@
-/* Calendar styles — owned by the tasks/calendar/journal agent (see docs/redesign-brief.md). */
+/* Calendar styles — owned by the tasks/calendar/journal agent (see docs/redesign-brief.md).
+   Loads after styles.css, so it warms/overrides the base .cal-* rules.
+   Tokens only, so dark mode is automatic. */
+
+/* ---- month grid: warmer, weekend columns tinted ---- */
+.cal-cell.weekend { background: color-mix(in srgb, var(--amber) 5%, var(--surface)); }
+.cal-cell.dim.weekend { background: color-mix(in srgb, var(--amber) 4%, var(--surface)); }
+
+/* The ONE saturated moment (month view): today's day number, filled solid. */
+.cal-cell.today {
+  border-color: var(--highlight);
+  box-shadow: inset 0 0 0 1px var(--highlight);
+}
+.cal-cell.today .cal-daynum { background: var(--highlight); color: #fff; }
+
+/* Chips: thin left accent + content glyph, quieter fill. */
+.cal-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface-2); border-left: 3px solid var(--text-dim);
+}
+.cal-chip-icon { font-size: 11px; line-height: 1; flex-shrink: 0; }
+.cal-chip b { flex-shrink: 0; }
+
+/* ---- week view: each day is a mini vertical sequence on a thin rail ---- */
+.cal-week-col.weekend { background: color-mix(in srgb, var(--amber) 5%, var(--surface)); }
+/* Today's column header number is the one saturated accent in week view. */
+.cal-week-col.today { border-color: var(--highlight); }
+.cal-week-col.today .cal-week-head .dnum { color: var(--highlight); }
+
+.cal-week-seq { position: relative; padding-left: 14px; flex: 1; }
+.cal-week-seq::before {
+  content: ''; position: absolute; left: 4px; top: 4px; bottom: 4px;
+  width: 2px; border-radius: 2px; background: var(--border);
+}
+.cal-week-node { position: relative; padding: 3px 0; }
+.cal-week-node::before {
+  content: ''; position: absolute; left: -12px; top: 9px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--accent);
+}
+.cal-week-node .cal-chip { white-space: normal; }
+.cal-week-empty {
+  flex: 1; color: var(--text-dim); font-size: 12px; padding: 6px 2px 0;
+}
+
+/* ---- day view: proper vertical timeline ---- */
+.cal-day { padding: 18px 20px; }
+.cal-timeline { position: relative; padding-left: 78px; }
+.cal-timeline::before {
+  content: ''; position: absolute; left: 66px; top: 10px; bottom: 10px;
+  width: 2px; border-radius: 2px; background: var(--border);
+}
+.tl-item { position: relative; padding: 6px 0; }
+.tl-item::before {
+  content: ''; position: absolute; left: -18px; top: 16px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--accent); z-index: 1;
+}
+.tl-time {
+  position: absolute; left: -78px; top: 12px; width: 60px;
+  text-align: right; font-size: 12px; font-weight: 600; color: var(--text-dim);
+}
+.tl-row .row { border-bottom: none; }
+.tl-row .row-accent { padding-left: 8px; }
+
+@media (max-width: 760px) {
+  .cal-week-seq { padding-left: 12px; }
+  .cal-timeline { padding-left: 60px; }
+  .cal-timeline::before { left: 50px; }
+  .tl-time { left: -60px; width: 46px; font-size: 11px; }
+  .tl-item::before { left: -16px; }
+}

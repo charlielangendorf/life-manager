@@ -1,1 +1,180 @@
-/* Dashboard styles — owned by the dashboard/focus agent (see docs/redesign-brief.md). */
+/* Dashboard ("Today") — warm daily brief. Owned by the dashboard agent.
+   Serif human headline, a single saturated "up next" hero (the one loud
+   moment), a vertical timeline for the day, quiet supporting lists.
+   Theme tokens only — dark mode is automatic. Loads after styles.css. */
+
+/* ---- headline ---- */
+.dash-head { margin-bottom: 18px; }
+.dash-title {
+  margin: 0; font-family: var(--font-serif); font-weight: 700;
+  font-size: 30px; line-height: 1.15; letter-spacing: -.015em;
+  overflow-wrap: anywhere;
+}
+.dash-date {
+  margin-top: 6px; color: var(--text-dim); font-size: 14px;
+}
+
+/* ---- quick add — a warm input, not a dashed admin box ---- */
+.dash-quick { margin-bottom: 18px; }
+.dash-quick input {
+  width: 100%; padding: 13px 16px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface);
+  outline: none; color: var(--text); font-size: 15px;
+  box-shadow: var(--shadow);
+}
+.dash-quick input::placeholder { color: var(--text-dim); }
+.dash-quick input:focus { border-color: var(--accent); }
+
+/* ---- the ONE saturated moment: "up next" hero chip ---- */
+.dash-hero {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--highlight); color: #fff;
+  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 18px;
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.dash-hero:hover { filter: brightness(1.04); }
+.dash-hero-icon {
+  font-size: 22px; width: 34px; height: 34px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, .18); border-radius: 50%;
+}
+.dash-hero-check {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, .8); background: transparent;
+  cursor: pointer; position: relative; padding: 0;
+}
+.dash-hero-check:hover { background: rgba(255, 255, 255, .18); }
+.dash-hero-check.checked { background: #fff; border-color: #fff; }
+.dash-hero-check.checked::after {
+  content: '✓'; color: var(--highlight); font-size: 14px; font-weight: 700;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+}
+.dash-hero-main { min-width: 0; }
+.dash-hero-label {
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 600; opacity: .85;
+}
+.dash-hero-title {
+  font-family: var(--font-serif); font-size: 20px; font-weight: 700;
+  line-height: 1.2; margin-top: 2px; overflow-wrap: anywhere;
+}
+.dash-hero-title.done { text-decoration: line-through; opacity: .75; }
+
+/* ---- overdue strip: compact, urgent-but-quiet (thin danger border) ---- */
+.dash-overdue {
+  border-left: 3px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 5%, var(--surface));
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 18px;
+}
+.dash-od-head {
+  font-size: 12px; font-weight: 700; color: var(--danger);
+  text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+}
+.dash-od-rows { display: flex; flex-direction: column; gap: 2px; }
+.dash-od-row {
+  display: flex; align-items: center; gap: 10px; padding: 5px 0; cursor: pointer;
+}
+.dash-od-row .check { margin-top: 0; }
+.dash-od-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.dash-od-when {
+  font-size: 12px; color: var(--danger); font-weight: 600; flex-shrink: 0;
+}
+
+/* ---- blocks / section labels shared by timeline, habits, upcoming ---- */
+.dash-block { margin-bottom: 22px; }
+.dash-h2 {
+  margin: 0 0 12px; font-size: 12.5px; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--text-dim); font-weight: 600;
+}
+
+/* ---- vertical timeline ---- */
+.timeline { position: relative; padding-left: 76px; }
+.timeline::before {
+  content: ''; position: absolute; left: 56px; top: 10px; bottom: 10px;
+  width: 2px; background: var(--border); border-radius: 2px;
+}
+.tl-item {
+  position: relative; padding: 9px 0; display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+}
+/* quiet time label sits to the LEFT of the line */
+.tl-time {
+  position: absolute; left: -76px; width: 48px; top: 50%;
+  transform: translateY(-50%); text-align: right;
+  font-size: 12.5px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+/* event node dot / icon, centered on the connecting line */
+.tl-node {
+  position: absolute; left: -32px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+/* task check circle doubles as the timeline node */
+.tl-check {
+  position: absolute; left: -32px; top: 50%; transform: translateY(-50%);
+  margin-top: 0;
+}
+.tl-main { min-width: 0; flex: 1; }
+.tl-title { overflow-wrap: anywhere; }
+.tl-item.done .tl-title { text-decoration: line-through; color: var(--text-dim); }
+/* the "up next" item on the timeline gets a subtle accent tie-in (not loud) */
+.tl-item.is-next .tl-title { font-weight: 600; }
+.tl-item.is-next .tl-node { border-color: var(--highlight); }
+
+/* ---- habits: one-tap pills ---- */
+.dash-habits { display: flex; flex-wrap: wrap; gap: 10px; }
+.dash-habit-pill {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 14px 8px 8px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; text-align: left; color: inherit;
+}
+.dash-habit-pill:hover { border-color: var(--green); background: var(--surface-2); }
+.dash-habit-mark {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+  color: var(--green); font-weight: 700; font-size: 14px;
+}
+.dash-habit-body { display: flex; flex-direction: column; line-height: 1.25; }
+.dash-habit-title { font-weight: 500; font-size: 14px; }
+.dash-habit-sub { font-size: 11.5px; color: var(--text-dim); }
+
+/* ---- next 7 days: quiet supporting list, visually lighter ---- */
+.dash-upcoming .dash-up-rows { display: flex; flex-direction: column; }
+.dash-up-row {
+  display: flex; align-items: center; gap: 12px; padding: 8px 2px;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.dash-up-rows .dash-up-row:last-child { border-bottom: none; }
+.dash-up-row .check { margin-top: 0; }
+.dash-up-title { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--text); }
+.dash-up-when { font-size: 12.5px; color: var(--text-dim); flex-shrink: 0; }
+
+/* ---- completed today: faded ---- */
+.dash-completed .dash-done-rows { display: flex; flex-direction: column; gap: 2px; }
+.dash-done-row { display: flex; align-items: center; gap: 12px; padding: 5px 2px; cursor: pointer; }
+.dash-done-row .check { margin-top: 0; }
+.dash-done-title { color: var(--text-dim); text-decoration: line-through; overflow-wrap: anywhere; }
+
+/* ---- warm empty state ---- */
+.dash-empty { text-align: center; padding: 40px 16px; }
+.dash-empty-mark { font-size: 40px; margin-bottom: 12px; }
+.dash-empty-title {
+  font-family: var(--font-serif); font-size: 22px; font-weight: 700; margin-bottom: 6px;
+}
+.dash-empty-copy { max-width: 360px; margin: 0 auto; color: var(--text-dim); line-height: 1.6; }
+
+/* ---- mobile ---- */
+@media (max-width: 760px) {
+  .dash-title { font-size: 24px; }
+  .dash-hero-title { font-size: 18px; }
+  /* pull the timeline in; keep time labels but tighter */
+  .timeline { padding-left: 64px; }
+  .timeline::before { left: 48px; }
+  .tl-time { left: -64px; width: 42px; font-size: 11.5px; }
+  .tl-node, .tl-check { left: -28px; }
+  .dash-habit-pill { flex: 1 1 100%; }
+}

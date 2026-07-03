@@ -1,9 +1,9 @@
-// Row renderer + click handling shared by the dashboard, tasks, and
-// calendar-day views.
+// Row renderer + click handling shared by the tasks and calendar-day views.
 import { store } from '../store.js';
 import { escapeHtml, relativeDue, timeOf, fmtTime, todayKey } from '../utils.js';
 import { recurrenceLabel } from '../models.js';
 import { openEditor } from '../taskModal.js';
+import { iconFor } from '../icons.js';
 
 export function entityRow(e) {
   const done = e.status === 'done';
@@ -11,9 +11,9 @@ export function entityRow(e) {
   const overdue = e.type === 'task' && !done && when && when.slice(0, 10) < todayKey();
   const subs = e.extra?.subtasks || [];
   const rec = e.extra?.recurrence;
+  const icon = iconFor(e);
 
   const meta = [];
-  if (e.priority) meta.push(`<span class="badge pri-${e.priority}">${e.priority}</span>`);
   if (e.project) meta.push(`<span class="badge badge-project">${escapeHtml(e.project)}</span>`);
   const linkedGoal = (e.linkedTo || []).map((id) => store.get(id)).find((g) => g?.type === 'goal');
   if (linkedGoal) {
@@ -29,11 +29,19 @@ export function entityRow(e) {
   if (subs.length) meta.push(`<span class="badge">${subs.filter((s) => s.done).length}/${subs.length} subtasks</span>`);
   if (rec) meta.push(`<span class="badge">↻ ${recurrenceLabel(rec)}</span>`);
 
+  // Priority reads as a thin left-border tint on the row (via pri-* class), not
+  // a filled badge. The leading glyph is the content-matched icon when we have
+  // one; otherwise the task keeps its check circle and events keep their dot.
+  const pri = e.type === 'task' && !done && e.priority ? `pri-${e.priority}` : '';
+  const lead = e.type === 'task'
+    ? `<button class="check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>`
+    : '<span class="event-dot"></span>';
+  const glyph = icon ? `<span class="row-icon" aria-hidden="true">${icon}</span>` : '';
+
   return `
-    <div class="row ${done ? 'done' : ''}" data-id="${e.id}">
-      ${e.type === 'task'
-        ? `<button class="check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>`
-        : '<span class="event-dot"></span>'}
+    <div class="row row-accent ${pri} ${done ? 'done' : ''}" data-id="${e.id}">
+      ${lead}
+      ${glyph}
       <div class="row-main">
         <div class="row-title">${escapeHtml(e.title)}</div>
         ${meta.length ? `<div class="row-meta">${meta.join('')}</div>` : ''}
