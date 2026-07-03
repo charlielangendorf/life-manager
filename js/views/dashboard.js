@@ -1,18 +1,14 @@
-// "Today" landing page: a warm, human daily brief.
-// A big serif headline computed from real state leads; a single saturated
-// "up next" chip is the one loud moment; today's timed items + due-today tasks
-// flow down a vertical timeline; overdue sits above as a quiet urgent strip;
-// habits become one-tap pills; the next 7 days are a light supporting list.
-//
-// We render our OWN row/timeline markup here (not shared.js entityRow) and
-// delegate clicks on the freshly-rendered container each render.
+// "Today" — a day-page in a paper planner. A rotated mono date stamp, a serif
+// headline whose count carries the page's single marker swipe, an "up next"
+// margin note, a dashed-rail timeline, red-pencil overdue annotations, habit
+// tally lines, and a quiet week-ahead list. No emoji, no filled chips.
+// Renders its own markup and delegates its own events.
 import { store } from '../store.js';
 import {
-  todayKey, addDays, fmtDateFull, escapeHtml, startOfWeekKey,
+  todayKey, addDays, escapeHtml, startOfWeekKey, parseDate,
   timeOf, fmtTime, relativeDue,
 } from '../utils.js';
 import { openEditor } from '../taskModal.js';
-import { iconFor } from '../icons.js';
 import {
   needsToday, frequencyOf, weeklyTargetOf, weekDoneCount, toggleLog,
 } from '../habits-logic.js';
@@ -20,156 +16,142 @@ import {
 const byDue = (a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999');
 const byWhen = (a, b) => (a.date || '').localeCompare(b.date || '');
 
-// ---- headline: a human sentence about the shape of the day ----
-function headline({ overdue, dueToday, events, upcoming, habitsDue }) {
+const swipe = (text) => `<span class="swipe">${escapeHtml(text)}</span>`;
+
+// Serif headline; the leading count phrase gets the page's ONE marker swipe.
+function headlineHtml({ overdue, dueToday, events, upcoming, habitsDue }) {
   if (overdue.length) {
     const n = overdue.length;
-    return `${n} overdue ${n === 1 ? 'thing needs' : 'things need'} attention first`;
+    return `${swipe(`${n} overdue`)} ${n === 1 ? 'thing needs' : 'things need'} attention first`;
   }
   const left = dueToday.length + events.length;
   if (left > 0) {
-    return `${left} ${left === 1 ? 'thing' : 'things'} left today`;
+    return `${swipe(`${left} ${left === 1 ? 'thing' : 'things'}`)} left today`;
   }
-  if (habitsDue) return 'Just your habits left today';
-  if (upcoming.length) return 'All clear today — a calm one ahead';
-  return 'All clear — enjoy the day';
+  if (habitsDue) return `${swipe('Just your habits')} left today`;
+  if (upcoming.length) return `${swipe('All clear')} today — a calm one ahead`;
+  return `${swipe('All clear')} — enjoy the day`;
 }
 
-// ---- the ONE saturated moment: a single "up next" hero chip ----
-// Priority: first overdue → next timed event/task → first due-today task.
+// Mono date stamp, slightly off-axis, like a rubber date stamp.
+function dateStamp(today) {
+  const d = parseDate(today);
+  const dow = d.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
+  const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+  return `<span class="dash-stamp">${escapeHtml(`${dow} ${mmdd}`)}</span>`;
+}
+
+// The most relevant item right now → an italic margin note under the headline.
 function upNext({ overdue, timed, dueToday }) {
-  if (overdue.length) return { entity: overdue[0], label: 'Overdue' };
+  if (overdue.length) return { entity: overdue[0], label: 'start here' };
   if (timed.length) {
     const e = timed[0];
     const t = timeOf(e.type === 'event' ? e.date : e.dueDate);
-    return { entity: e, label: t ? `Next · ${fmtTime(t)}` : 'Up next' };
+    return { entity: e, label: t ? `up next · ${fmtTime(t)}` : 'up next' };
   }
-  if (dueToday.length) return { entity: dueToday[0], label: 'Up next' };
+  if (dueToday.length) return { entity: dueToday[0], label: 'up next' };
   return null;
 }
 
-function heroChip(pick) {
+function upNextNote(pick) {
   if (!pick) return '';
   const { entity, label } = pick;
-  const icon = iconFor(entity);
   const isTask = entity.type === 'task';
   const done = entity.status === 'done';
   return `
-    <div class="dash-hero" data-id="${entity.id}" data-kind="${entity.type}">
-      ${isTask
-        ? `<button class="dash-hero-check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>`
-        : `<span class="dash-hero-icon">${icon || '•'}</span>`}
-      <div class="dash-hero-main">
-        <div class="dash-hero-label">${escapeHtml(label)}</div>
-        <div class="dash-hero-title ${done ? 'done' : ''}">${icon && isTask ? icon + ' ' : ''}${escapeHtml(entity.title)}</div>
-      </div>
+    <div class="dash-next" data-id="${entity.id}">
+      ${isTask ? `<button class="check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>` : '<span class="dash-next-dot"></span>'}
+      <span class="dash-next-label">${escapeHtml(label)}</span>
+      <span class="dash-next-title ${done ? 'done' : ''}">${escapeHtml(entity.title)}</span>
     </div>`;
 }
 
-// ---- overdue strip: compact, urgent-but-quiet (thin danger border) ----
-function overdueStrip(overdue, heroId) {
-  const items = overdue.filter((t) => t.id !== heroId);
+// Overdue: red-pencil territory — dashed rule, serif-italic annotations.
+function overdueStrip(overdue, nextId) {
+  const items = overdue.filter((t) => t.id !== nextId);
   if (!items.length) return '';
-  const rows = items.map((t) => {
-    const icon = iconFor(t);
-    return `
-      <div class="dash-od-row" data-id="${t.id}">
-        <button class="check ${t.status === 'done' ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>
-        <span class="dash-od-title">${icon ? icon + ' ' : ''}${escapeHtml(t.title)}</span>
-        <span class="dash-od-when">${escapeHtml(relativeDue(t.dueDate))}</span>
-      </div>`;
-  }).join('');
-  const n = items.length;
+  const rows = items.map((t) => `
+    <div class="dash-od-row" data-id="${t.id}">
+      <button class="check ${t.status === 'done' ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>
+      <span class="dash-od-title">${escapeHtml(t.title)}</span>
+      <span class="dash-od-when">${escapeHtml(relativeDue(t.dueDate))}</span>
+    </div>`).join('');
   return `
     <section class="dash-overdue" aria-label="Overdue">
-      <div class="dash-od-head">${n} more overdue</div>
-      <div class="dash-od-rows">${rows}</div>
+      <div class="dash-h2 is-danger">overdue · ${items.length}</div>
+      ${rows}
     </section>`;
 }
 
-// ---- vertical timeline: timed items (chrono) then untimed due-today tasks ----
-function timelineNode(entity, heroId) {
+function timelineNode(entity, nextId) {
   const isTask = entity.type === 'task';
   const done = entity.status === 'done';
   const when = entity.type === 'event' ? entity.date : entity.dueDate;
   const t = timeOf(when);
-  const icon = iconFor(entity);
-  const timeLabel = t ? fmtTime(t) : '';
-  const isHero = entity.id === heroId;
-  // Node marker: a check button for tasks, an icon/dot for events.
+  const isNext = entity.id === nextId;
   const marker = isTask
     ? `<button class="check tl-check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>`
-    : `<span class="tl-node">${icon || ''}</span>`;
+    : '<span class="tl-node"></span>';
   return `
-    <div class="tl-item ${done ? 'done' : ''} ${isHero ? 'is-next' : ''}" data-id="${entity.id}">
-      <span class="tl-time">${escapeHtml(timeLabel)}</span>
+    <div class="tl-item ${done ? 'done' : ''} ${isNext ? 'is-next' : ''}" data-id="${entity.id}">
+      <span class="tl-time">${escapeHtml(t ? fmtTime(t) : '')}</span>
       ${marker}
-      <div class="tl-main">
-        <span class="tl-title">${icon && isTask ? icon + ' ' : ''}${escapeHtml(entity.title)}</span>
-      </div>
+      <div class="tl-main"><span class="tl-title">${escapeHtml(entity.title)}</span></div>
     </div>`;
 }
 
-function timelineSection(timed, untimed, heroId) {
+function timelineSection(timed, untimed, nextId) {
   if (!timed.length && !untimed.length) return '';
   const nodes = [
-    ...timed.map((e) => timelineNode(e, heroId)),
-    ...untimed.map((e) => timelineNode(e, heroId)),
+    ...timed.map((e) => timelineNode(e, nextId)),
+    ...untimed.map((e) => timelineNode(e, nextId)),
   ].join('');
   return `
     <section class="dash-block">
-      <h2 class="dash-h2">Today</h2>
+      <h2 class="dash-h2">today</h2>
       <div class="timeline">${nodes}</div>
     </section>`;
 }
 
-// ---- habits: still-to-check cluster, one-tap pills ----
+// Habits still to check: bare lines with a one-tap square and a mono sub.
 function habitsSection(today) {
   const due = store.all('habit').filter((h) => needsToday(h, today));
   if (!due.length) return '';
   const week = startOfWeekKey(today);
-  const pills = due
+  const rows = due
     .sort((a, b) => a.title.localeCompare(b.title))
     .map((h) => {
-      const icon = iconFor(h);
-      const mark = icon || (h.title.trim()[0] || '·').toUpperCase();
-      let sub = '';
+      let sub = 'daily';
       if (frequencyOf(h) === 'weekly') {
         sub = `${weekDoneCount(h, week)}/${weeklyTargetOf(h)} this week`;
       }
       return `
-        <button class="dash-habit-pill" data-habit-id="${h.id}" data-action="habit-check"
+        <button class="dash-habit-line" data-habit-id="${h.id}" data-action="habit-check"
                 aria-label="Check off ${escapeHtml(h.title)}">
-          <span class="dash-habit-mark">${escapeHtml(mark)}</span>
-          <span class="dash-habit-body">
-            <span class="dash-habit-title">${escapeHtml(h.title)}</span>
-            ${sub ? `<span class="dash-habit-sub">${escapeHtml(sub)}</span>` : ''}
-          </span>
+          <span class="dash-habit-box" aria-hidden="true"></span>
+          <span class="dash-habit-title">${escapeHtml(h.title)}</span>
+          <span class="dash-habit-sub">${escapeHtml(sub)}</span>
         </button>`;
     })
     .join('');
   return `
     <section class="dash-block">
-      <h2 class="dash-h2">Still to check today</h2>
-      <div class="dash-habits">${pills}</div>
+      <h2 class="dash-h2">still to check</h2>
+      <div class="dash-habits">${rows}</div>
     </section>`;
 }
 
-// ---- next 7 days: quiet supporting list, lighter than today ----
 function upcomingSection(upcoming) {
   if (!upcoming.length) return '';
-  const rows = upcoming.map((t) => {
-    const icon = iconFor(t);
-    return `
-      <div class="dash-up-row" data-id="${t.id}">
-        <button class="check ${t.status === 'done' ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>
-        <span class="dash-up-title">${icon ? icon + ' ' : ''}${escapeHtml(t.title)}</span>
-        <span class="dash-up-when">${escapeHtml(relativeDue(t.dueDate))}</span>
-      </div>`;
-  }).join('');
+  const rows = upcoming.map((t) => `
+    <div class="dash-up-row" data-id="${t.id}">
+      <button class="check ${t.status === 'done' ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>
+      <span class="dash-up-title">${escapeHtml(t.title)}</span>
+      <span class="dash-up-when">${escapeHtml(relativeDue(t.dueDate))}</span>
+    </div>`).join('');
   return `
     <section class="dash-block dash-upcoming">
-      <h2 class="dash-h2">Next 7 days</h2>
+      <h2 class="dash-h2">next 7 days</h2>
       <div class="dash-up-rows">${rows}</div>
     </section>`;
 }
@@ -183,7 +165,7 @@ function completedSection(doneToday) {
     </div>`).join('');
   return `
     <section class="dash-block dash-completed">
-      <h2 class="dash-h2">Completed today · ${doneToday.length}</h2>
+      <h2 class="dash-h2">crossed off · ${doneToday.length}</h2>
       <div class="dash-done-rows">${rows}</div>
     </section>`;
 }
@@ -206,8 +188,6 @@ export function render(container) {
     .filter((e) => e.date && e.date.slice(0, 10) === today)
     .sort(byWhen);
 
-  // Timed items (events + due-today tasks that carry a time) in chrono order;
-  // untimed due-today tasks flow after them on the timeline.
   const timedTasks = dueToday.filter((t) => timeOf(t.dueDate));
   const untimedTasks = dueToday.filter((t) => !timeOf(t.dueDate));
   const timed = [...events, ...timedTasks].sort((a, b) => {
@@ -221,34 +201,34 @@ export function render(container) {
     && !upcoming.length && !habitsDue && !doneToday.length;
 
   const pick = upNext({ overdue, timed, dueToday: untimedTasks.length ? untimedTasks : dueToday });
-  const heroId = pick?.entity.id || null;
+  const nextId = pick?.entity.id || null;
 
   container.innerHTML = `
     <header class="dash-head">
-      <h1 class="dash-title">${escapeHtml(headline({ overdue, dueToday, events, upcoming, habitsDue }))}</h1>
-      <div class="dash-date">${escapeHtml(fmtDateFull(today))}</div>
+      ${dateStamp(today)}
+      <h1 class="dash-title">${headlineHtml({ overdue, dueToday, events, upcoming, habitsDue })}</h1>
+      ${upNextNote(pick)}
     </header>
 
     <form id="quick-add" class="dash-quick">
-      <input id="quick-add-input" placeholder="Add something for today…" autocomplete="off">
+      <input id="quick-add-input" placeholder="add something for today…" autocomplete="off">
     </form>
 
-    ${heroChip(pick)}
-    ${overdueStrip(overdue, heroId)}
-    ${timelineSection(timed, untimedTasks, heroId)}
+    ${overdueStrip(overdue, nextId)}
+    ${timelineSection(timed, untimedTasks, nextId)}
     ${habitsSection(today)}
     ${upcomingSection(upcoming)}
     ${completedSection(doneToday)}
     ${allEmpty ? `
       <section class="dash-empty">
-        <div class="dash-empty-mark">☀️</div>
+        <svg class="dash-empty-mark" viewBox="0 0 60 24" aria-hidden="true"><path d="M4 16 C 14 8, 24 20, 34 12 C 42 6, 50 14, 56 9" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
         <div class="dash-empty-title">Nothing on the books</div>
-        <div class="dash-empty-copy">Your day is wide open. Add a task above whenever you're ready.</div>
+        <div class="dash-empty-copy">A blank page for the day. Add something above whenever you're ready.</div>
       </section>` : ''}
   `;
 
-  // Delegated clicks: check-offs toggle; habit pills write the log; a click
-  // anywhere else on a data-id row/node opens the editor (matching old behavior).
+  // Delegated clicks: check-offs toggle; habit lines write the log; a click
+  // anywhere else on a data-id row opens the editor.
   container.addEventListener('click', (ev) => {
     const habitBtn = ev.target.closest('[data-action="habit-check"]');
     if (habitBtn) {

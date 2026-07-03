@@ -1,81 +1,78 @@
-/* Focus mode styles — owned by the dashboard/focus agent (redesign-brief.md).
-   Ultra-minimal, calm, generous whitespace, larger type. Warm now: serif date
-   headline; the single next task gets the one saturated --highlight accent,
-   everything else stays neutral. Theme tokens only. */
+/* Focus — a single ruled page. Serif date, square checks, the next task
+   marked in red pencil. Tokens only; dark mode automatic. */
 
 .focus {
-  max-width: 640px; margin: 0 auto; padding: 24px 8px 64px;
+  max-width: 620px; margin: 0 auto; padding: 26px 8px 64px;
   display: flex; flex-direction: column;
 }
 
 .focus-back {
   align-self: flex-start; color: var(--text-dim); text-decoration: none;
-  font-size: 14px; margin-bottom: 28px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; margin-bottom: 26px;
 }
 .focus-back:hover { color: var(--accent); }
 
 .focus-date {
-  margin: 0 0 32px; font-family: var(--font-serif);
-  font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em;
+  margin: 0 0 28px; font-family: var(--font-serif);
+  font-size: 28px; font-weight: 400; line-height: 1.2;
 }
 
-/* today's actionable list */
-.focus-list { display: flex; flex-direction: column; gap: 4px; }
+.focus-list { display: flex; flex-direction: column; }
 
 .focus-row {
   display: flex; align-items: center; gap: 16px;
-  padding: 14px 4px; border-bottom: 1px solid var(--border);
+  padding: 13px 2px; border-bottom: 1px dashed var(--border);
 }
 .focus-list .focus-row:last-child { border-bottom: none; }
 
-/* the single next task — the ONE saturated moment. A thin --highlight left
-   accent and a warm surface; every other row stays neutral. */
-.focus-row.is-next {
-  border-bottom-color: transparent;
-  border-left: 3px solid var(--highlight);
-  background: color-mix(in srgb, var(--highlight) 7%, transparent);
-  border-radius: 10px; padding-left: 14px; margin-bottom: 4px;
+/* the next task — marked with a red-pencil arrow in the margin */
+.focus-row.is-next { position: relative; padding-left: 22px; }
+.focus-row.is-next::before {
+  content: '→'; position: absolute; left: 0; top: 50%; transform: translateY(-50%) rotate(-2deg);
+  color: var(--accent); font-family: var(--font-serif); font-size: 16px;
 }
-.focus-row.is-next .focus-title { font-weight: 600; }
-.focus-row.is-next.done { border-left-color: var(--border); background: none; }
+.focus-row.is-next .focus-title { font-style: italic; }
+.focus-row.is-next.done::before { content: ''; }
 
-/* the check circle is styled by the shared .check class in styles.css;
-   size it up here so it reads at focus-mode scale. */
-.focus-row .check { width: 24px; height: 24px; margin-top: 0; }
-.focus-row .check.checked::after { font-size: 14px; }
+.focus-row .check { width: 19px; height: 19px; margin-top: 0; }
 
-.focus-title { font-size: 19px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.focus-title {
+  font-family: var(--font-serif); font-size: 18px; flex: 1; min-width: 0;
+  overflow-wrap: anywhere;
+}
 .focus-row.done .focus-title { text-decoration: line-through; color: var(--text-dim); }
 
 .focus-overdue {
-  font-size: 12px; color: var(--danger); font-weight: 600;
-  text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0;
+  font-family: var(--font-serif); font-style: italic; font-size: 13px;
+  color: var(--danger); flex-shrink: 0; transform: rotate(-1deg);
 }
 
-/* quick add — bare, no card chrome */
-.focus-add { margin-top: 32px; }
+.focus-add { margin-top: 30px; }
 .focus-add input {
-  width: 100%; padding: 14px 4px; font-size: 18px;
+  width: 100%; padding: 12px 2px; font-size: 17px;
   border: none; border-bottom: 1px solid var(--border);
   background: none; outline: none; color: var(--text);
+  font-family: var(--font-serif);
 }
-.focus-add input::placeholder { color: var(--text-dim); }
+.focus-add input::placeholder { color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; letter-spacing: .05em; }
 .focus-add input:focus { border-bottom-color: var(--accent); }
 
-/* all-done state */
-.focus-done { text-align: center; padding: 36px 12px; }
+.focus-done { text-align: center; padding: 34px 12px; }
 .focus-done-mark {
-  width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%;
-  background: color-mix(in srgb, var(--green) 16%, transparent);
-  color: var(--green); font-size: 30px; font-weight: 700;
+  width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%;
+  border: 1.6px solid var(--green); color: var(--green);
+  font-size: 24px; font-family: var(--font-serif);
   display: flex; align-items: center; justify-content: center;
+  transform: rotate(-2deg); background: none;
 }
-.focus-done-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.focus-done-title { font-family: var(--font-serif); font-size: 21px; margin-bottom: 8px; }
 .focus-done-copy {
   max-width: 380px; margin: 0 auto; color: var(--text-dim); line-height: 1.6;
+  font-family: var(--font-serif);
 }
 
 @media (max-width: 760px) {
-  .focus-date { font-size: 24px; }
-  .focus-title { font-size: 17px; }
+  .focus-date { font-size: 23px; }
+  .focus-title { font-size: 16px; }
 }

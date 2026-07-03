@@ -146,7 +146,7 @@ function weeklyCard(e) {
 function threadItem(e, hero) {
   const weekly = e.extra?.kind === 'weekly-review';
   const card = weekly ? weeklyCard(e) : dailyCard(e);
-  const glyph = weekly ? '★' : '✍️';
+  const glyph = weekly ? '★' : '·';
   return `
     <div class="jrnl-item ${weekly ? 'is-weekly' : 'is-daily'} ${hero ? 'is-hero' : ''}">
       <span class="jrnl-node" aria-hidden="true">${glyph}</span>
@@ -157,7 +157,6 @@ function threadItem(e, hero) {
 function emptyState() {
   return `
     <section class="card jrnl-empty">
-      <div class="jrnl-empty-icon">📓</div>
       <h2 class="jrnl-empty-title">Start your journal</h2>
       <p class="jrnl-empty-copy">
         A few lines a day adds up. And a <strong>weekly review</strong> — what went

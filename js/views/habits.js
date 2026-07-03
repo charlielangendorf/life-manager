@@ -1,15 +1,11 @@
-// Habits view: CRUD via own modal, daily/weekly check-off, streaks, last-7-day
-// strip, per-day notes, and an expandable per-habit stats area.
-//
-// Layout (redesign): one HERO habit at top — the still-active habit with the
-// best current streak — rendered large with a saturated streak band (the single
-// --highlight moment). Remaining habits are quieter, compact rows below. The
-// 7-day strip is the primary streak visual (filled = done, hollow = missed,
-// today ringed); the streak number is secondary support.
+// Habits view — a bullet-journal tracker page. Each habit is a ruled line:
+// square check for today, serif name, the last 7 days as clickable tally
+// marks (× done · missed), and a mono streak note in the margin. The best
+// current streak on the page carries the single marker swipe. Stats are
+// mono figures on dashed rules; no boxes, no emoji.
 import { store } from '../store.js';
 import { escapeHtml, todayKey, addDays, startOfWeekKey, WEEKDAYS, fmtDate } from '../utils.js';
 import { showToast } from '../toast.js';
-import { iconFor } from '../icons.js';
 import {
   frequencyOf, weeklyTargetOf, isDayDone, dayNote, toggleLog, setLogNote,
   currentStreak, longestStreak, completionRate, needsToday, weekDoneCount,
@@ -33,20 +29,11 @@ function saveNote(habit, dayKey, note) {
   writeLog(habit, setLogNote(habit.extra?.log || {}, dayKey, note));
 }
 
-// ---- small shared pieces ----
+// ---- pieces ----
 
-// Icon glyph or a tinted first-letter chip fallback, sized by variant.
-function habitGlyph(habit, variant) {
-  const icon = iconFor(habit);
-  const cls = variant === 'hero' ? 'habit-glyph is-hero' : 'habit-glyph';
-  if (icon) return `<span class="${cls}" aria-hidden="true">${icon}</span>`;
-  const letter = (habit.title || '?').trim().charAt(0).toUpperCase() || '?';
-  return `<span class="${cls} is-letter" aria-hidden="true">${escapeHtml(letter)}</span>`;
-}
-
-// The 7-day strip: warm filled marks for done days, hollow for missed, today
-// ringed. This is the primary streak visual — scannable marks over a number.
-function sevenDayStrip(habit, variant) {
+// Last 7 days as tally marks: × for done (olive), · for missed (faint).
+// Each mark is still a button that toggles that day.
+function tallyStrip(habit) {
   const today = todayKey();
   const marks = [];
   for (let i = 6; i >= 0; i -= 1) {
@@ -57,76 +44,46 @@ function sevenDayStrip(habit, variant) {
     marks.push(`
       <button class="habit-mark ${done ? 'on' : 'off'} ${i === 0 ? 'is-today' : ''}"
               data-action="toggle-day" data-day="${day}"
-              title="${escapeHtml(label)} ${fmtDate(day)}${done ? ' — done' : ' — missed'}"
-              aria-label="${escapeHtml(label)} ${done ? 'done' : 'not done'}">
-        <span class="habit-mark-fill" aria-hidden="true"></span>
-        <span class="habit-mark-day">${escapeHtml(label[0])}</span>
-        ${hasNote ? '<span class="habit-mark-note" aria-hidden="true">·</span>' : ''}
-      </button>`);
+              title="${escapeHtml(label)} ${fmtDate(day)}${done ? ' — done' : ' — missed'}${hasNote ? ' · has note' : ''}"
+              aria-label="${escapeHtml(label)} ${done ? 'done' : 'not done'}">${done ? '×' : '·'}</button>`);
   }
-  const cls = variant === 'hero' ? 'habit-strip is-hero' : 'habit-strip';
-  return `<div class="${cls}">${marks.join('')}</div>`;
+  return `<span class="habit-tallies">${marks.join('')}</span>`;
 }
 
-// Meta badges shared by hero + rows (frequency/weekly progress, tags, goal).
-// The streak is rendered separately (as the hero band or a compact chip), so it
-// is intentionally NOT included here.
-function metaBadges(habit) {
+function streakNote(habit, swiped) {
+  const cur = currentStreak(habit);
+  if (cur <= 0) return '';
+  const unit = frequencyOf(habit) === 'weekly' ? 'week' : 'day';
+  const text = `${cur} ${unit}${cur === 1 ? '' : 's'} running`;
+  return `<span class="habit-streak-note ${swiped ? 'swipe' : ''}">${escapeHtml(text)}</span>`;
+}
+
+function metaLine(habit) {
   const today = todayKey();
-  const freq = frequencyOf(habit);
-  const badges = [];
-  if (freq === 'weekly') {
-    const target = weeklyTargetOf(habit);
-    const wk = weekDoneCount(habit, startOfWeekKey(today));
-    badges.push(`<span class="badge">Weekly · ${wk}/${target}</span>`);
+  const bits = [];
+  if (frequencyOf(habit) === 'weekly') {
+    bits.push(`weekly ${weekDoneCount(habit, startOfWeekKey(today))}/${weeklyTargetOf(habit)}`);
   } else {
-    badges.push('<span class="badge">Daily</span>');
+    bits.push('daily');
   }
-  for (const t of habit.tags || []) badges.push(`<span class="badge badge-tag">#${escapeHtml(t)}</span>`);
+  for (const t of habit.tags || []) bits.push(`#${t}`);
   const linkedGoal = (habit.linkedTo || []).map((id) => store.get(id)).find((g) => g && g.type === 'goal');
-  if (linkedGoal) badges.push(`<span class="badge badge-project">🎯 ${escapeHtml(linkedGoal.title)}</span>`);
-  return badges.join('');
+  if (linkedGoal) bits.push(`re: ${linkedGoal.title}`);
+  return `<span class="habit-meta-line">${escapeHtml(bits.join(' · '))}</span>`;
 }
 
-function checkLabelFor(habit) {
-  const freq = frequencyOf(habit);
-  const doneToday = isDayDone(habit, todayKey());
-  return freq === 'weekly'
-    ? (doneToday ? 'Logged today' : 'Log today')
-    : (doneToday ? 'Done today' : 'Check off');
-}
-
-// Completion as a small warm arc with the numbers as supporting text — an
-// asymmetric arrangement, not four identical tiles.
+// Mono figures on dashed rules — a pencil ledger, not stat tiles.
 function statsPanel(habit) {
   const cur = currentStreak(habit);
   const longest = longestStreak(habit);
   const rate = completionRate(habit);
   const freq = frequencyOf(habit);
-  const windowLabel = freq === 'weekly' ? 'last 12 weeks' : 'last 30 days';
-  const unitLabel = freq === 'weekly' ? 'weeks met' : 'days done';
-  // SVG donut arc: circumference for r=26 is ~163.36; fill dashoffset by pct.
-  const r = 26;
-  const circ = 2 * Math.PI * r;
-  const dash = (rate.pct / 100) * circ;
+  const windowLabel = freq === 'weekly' ? 'of last 12 weeks' : 'of last 30 days';
   return `
-    <div class="habit-stats">
-      <div class="habit-arc">
-        <svg viewBox="0 0 64 64" class="habit-arc-svg" aria-hidden="true">
-          <circle class="habit-arc-track" cx="32" cy="32" r="${r}"></circle>
-          <circle class="habit-arc-fill" cx="32" cy="32" r="${r}"
-                  stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"></circle>
-        </svg>
-        <div class="habit-arc-label">
-          <span class="habit-arc-pct">${rate.pct}<small>%</small></span>
-          <span class="habit-arc-sub">${escapeHtml(windowLabel)}</span>
-        </div>
-      </div>
-      <div class="habit-stat-facts">
-        <div class="habit-fact"><span class="habit-fact-n">${cur}</span><span class="habit-fact-l">current streak</span></div>
-        <div class="habit-fact"><span class="habit-fact-n">${longest}</span><span class="habit-fact-l">longest streak</span></div>
-        <div class="habit-fact"><span class="habit-fact-n">${rate.done}<span class="habit-fact-slash">/${rate.expected}</span></span><span class="habit-fact-l">${escapeHtml(unitLabel)}</span></div>
-      </div>
+    <div class="habit-ledger">
+      <div class="habit-ledger-line"><span>current streak</span><span class="habit-ledger-dots"></span><span>${cur}</span></div>
+      <div class="habit-ledger-line"><span>longest streak</span><span class="habit-ledger-dots"></span><span>${longest}</span></div>
+      <div class="habit-ledger-line"><span>kept ${escapeHtml(windowLabel)}</span><span class="habit-ledger-dots"></span><span>${rate.done}/${rate.expected} — ${rate.pct}%</span></div>
     </div>`;
 }
 
@@ -135,105 +92,50 @@ function noteEditor(habit, dayKey) {
   return `
     <div class="habit-note-edit" data-note-day="${dayKey}">
       <input class="habit-note-input" type="text" maxlength="140"
-             placeholder="Note for ${escapeHtml(fmtDate(dayKey))}…"
+             placeholder="note for ${escapeHtml(fmtDate(dayKey))}…"
              value="${escapeHtml(existing)}" autocomplete="off">
       <button class="ghost-btn" data-action="note-save">Save</button>
       <button class="icon-btn" data-action="note-cancel" title="Close">✕</button>
     </div>`;
 }
 
-function actionButtons(habit, doneToday, expanded) {
-  return `
-    <div class="habit-actions">
-      ${doneToday ? '<button class="icon-btn" data-action="add-note" title="Note for today">📝</button>' : ''}
-      <button class="icon-btn ${expanded ? 'on' : ''}" data-action="stats" aria-expanded="${expanded}" title="Stats">📊</button>
-      <button class="icon-btn" data-action="edit" title="Edit habit">✏️</button>
-    </div>`;
-}
-
-// ---- HERO card: the still-active habit with the best current streak. Its
-// streak is the screen's one saturated (--highlight) moment. ----
-
-function heroCard(habit) {
+function habitLine(habit, swipeId) {
   const today = todayKey();
-  const cur = currentStreak(habit);
-  const freq = frequencyOf(habit);
   const doneToday = isDayDone(habit, today);
   const expanded = ui.expanded === habit.id;
-  const unit = freq === 'weekly' ? 'week' : 'day';
-  const streakWord = cur === 1 ? unit : `${unit}s`;
+  const todayNote = dayNote(habit, today);
 
   return `
-    <div class="habit-hero" data-id="${habit.id}">
-      <div class="habit-hero-band">
-        <span class="habit-hero-flame" aria-hidden="true">🔥</span>
-        <span class="habit-hero-streak-n">${cur}</span>
-        <span class="habit-hero-streak-l">${escapeHtml(streakWord)}<br>on a roll</span>
+    <div class="habit-line ${doneToday ? 'is-done' : ''}" data-id="${habit.id}">
+      <div class="habit-line-top">
+        <button class="check ${doneToday ? 'checked' : ''}" data-action="check-today"
+                aria-label="${doneToday ? 'Uncheck today' : 'Check off today'}"></button>
+        <span class="habit-name">${escapeHtml(habit.title)}</span>
+        ${tallyStrip(habit)}
+        ${streakNote(habit, habit.id === swipeId)}
+        <span class="spacer"></span>
+        <span class="habit-line-actions">
+          ${doneToday ? '<button class="habit-txt-btn" data-action="add-note">note</button>' : ''}
+          <button class="habit-txt-btn ${expanded ? 'on' : ''}" data-action="stats" aria-expanded="${expanded}">stats</button>
+          <button class="habit-txt-btn" data-action="edit">edit</button>
+        </span>
       </div>
-      <div class="habit-hero-body">
-        <div class="habit-hero-top">
-          <button class="habit-check is-hero ${doneToday ? 'on' : ''}" data-action="check-today"
-                  aria-label="${doneToday ? 'Uncheck today' : 'Check off today'}">
-            <span class="habit-check-mark">✓</span>
-          </button>
-          <div class="habit-hero-main">
-            <div class="habit-hero-title">${habitGlyph(habit, 'hero')}<span>${escapeHtml(habit.title)}</span></div>
-            ${habit.notes ? `<div class="habit-notes">${escapeHtml(habit.notes)}</div>` : ''}
-            <div class="habit-meta">${metaBadges(habit)}</div>
-          </div>
-          ${actionButtons(habit, doneToday, expanded)}
-        </div>
-        <div class="habit-hero-lower">
-          ${sevenDayStrip(habit, 'hero')}
-          <span class="habit-check-text ${doneToday ? 'muted' : ''}">${escapeHtml(checkLabelFor(habit))}</span>
-        </div>
-        ${ui.noteFor === habit.id ? noteEditor(habit, today) : ''}
-        ${expanded ? statsPanel(habit) : ''}
-      </div>
-    </div>`;
-}
-
-// ---- quieter compact row for the remaining habits ----
-
-function habitRow(habit) {
-  const today = todayKey();
-  const cur = currentStreak(habit);
-  const doneToday = isDayDone(habit, today);
-  const expanded = ui.expanded === habit.id;
-
-  return `
-    <div class="habit-row ${doneToday ? 'is-done' : ''}" data-id="${habit.id}">
-      <div class="habit-row-top">
-        <button class="habit-check ${doneToday ? 'on' : ''}" data-action="check-today"
-                aria-label="${doneToday ? 'Uncheck today' : 'Check off today'}">
-          <span class="habit-check-mark">✓</span>
-        </button>
-        <div class="habit-row-main">
-          <div class="habit-row-title">${habitGlyph(habit)}<span>${escapeHtml(habit.title)}</span>
-            ${cur > 0 ? `<span class="habit-streak-chip" title="Current streak">🔥 ${cur}</span>` : ''}
-          </div>
-          <div class="habit-meta">${metaBadges(habit)}</div>
-        </div>
-        ${sevenDayStrip(habit)}
-        ${actionButtons(habit, doneToday, expanded)}
-      </div>
+      ${habit.notes || todayNote ? `<div class="habit-sub">${habit.notes ? escapeHtml(habit.notes) : ''}${habit.notes && todayNote ? ' — ' : ''}${todayNote ? `<em>today: ${escapeHtml(todayNote)}</em>` : ''}</div>` : ''}
+      <div class="habit-sub">${metaLine(habit)}</div>
       ${ui.noteFor === habit.id ? noteEditor(habit, today) : ''}
       ${expanded ? statsPanel(habit) : ''}
     </div>`;
 }
 
-// Pick the hero: the still-active (streak > 0) habit with the best current
-// streak. Ties break toward one that still needs attention today, then title.
-function pickHero(habits) {
+// The single marker swipe belongs to the still-active habit with the best
+// current streak.
+function pickSwipe(habits) {
   const withStreak = habits
     .map((h) => ({ h, s: currentStreak(h) }))
     .filter((x) => x.s > 0);
   if (!withStreak.length) return null;
-  withStreak.sort((a, b) =>
-    b.s - a.s
-    || (needsToday(a.h) ? 0 : 1) - (needsToday(b.h) ? 0 : 1)
-    || a.h.title.localeCompare(b.h.title));
-  return withStreak[0].h;
+  withStreak.sort((a, b) => b.s - a.s || a.h.title.localeCompare(b.h.title));
+  return withStreak[0].h.id;
 }
 
 function draw(container) {
@@ -248,19 +150,16 @@ function draw(container) {
       </div>
       <section class="card">
         <div class="empty habit-empty">
-          <div class="habit-empty-icon">🌱</div>
-          <h2 class="habit-empty-head">Plant your first habit</h2>
-          <p>Small, steady, yours. Check it off each day and watch the streak grow — one warm mark at a time.</p>
+          <p class="habit-empty-line">A blank page. Small, steady, yours —
+          write one habit down and make the first mark.</p>
           <button id="new-habit-2" class="primary-btn">+ New habit</button>
         </div>
       </section>`;
     return;
   }
 
-  const hero = pickHero(habits);
-
-  const rest = [...habits].filter((h) => h !== hero).sort((a, b) => {
-    // Habits still needing attention today float to the top.
+  const swipeId = pickSwipe(habits);
+  const sorted = [...habits].sort((a, b) => {
     const an = needsToday(a) ? 0 : 1;
     const bn = needsToday(b) ? 0 : 1;
     return an - bn || a.title.localeCompare(b.title);
@@ -272,11 +171,7 @@ function draw(container) {
       <span class="spacer"></span>
       <button id="new-habit" class="primary-btn">+ New habit</button>
     </div>
-    ${hero ? heroCard(hero) : ''}
-    ${rest.length ? `
-      ${hero ? '<div class="habit-rest-label">Also keeping up</div>' : ''}
-      <div class="habit-rows">${rest.map(habitRow).join('')}</div>
-    ` : ''}`;
+    <div class="habit-lines rows">${sorted.map((h) => habitLine(h, swipeId)).join('')}</div>`;
 }
 
 // ---- event wiring (delegated on the fresh container) ----
@@ -288,8 +183,8 @@ export function render(container) {
       return;
     }
 
-    const card = ev.target.closest('[data-id]');
-    if (!card || !(card.classList.contains('habit-hero') || card.classList.contains('habit-row'))) return;
+    const card = ev.target.closest('.habit-line[data-id]');
+    if (!card) return;
     const habit = store.get(card.dataset.id);
     if (!habit) return;
 
@@ -305,7 +200,7 @@ export function render(container) {
     } else if (action === 'stats') {
       ui.expanded = ui.expanded === habit.id ? null : habit.id;
       draw(container);
-    } else if (action === 'add-note' || action === 'note-open') {
+    } else if (action === 'add-note') {
       ui.noteFor = habit.id;
       draw(container);
       container.querySelector('.habit-note-input')?.focus();
@@ -323,7 +218,7 @@ export function render(container) {
   // Enter in the note input saves; Escape cancels.
   container.addEventListener('keydown', (ev) => {
     if (!ev.target.classList?.contains('habit-note-input')) return;
-    const card = ev.target.closest('[data-id]');
+    const card = ev.target.closest('.habit-line[data-id]');
     const habit = card && store.get(card.dataset.id);
     if (ev.key === 'Enter' && habit) {
       ev.preventDefault();

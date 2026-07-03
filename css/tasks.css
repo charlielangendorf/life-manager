@@ -1,74 +1,58 @@
-/* Tasks styles — owned by the tasks/calendar/journal agent (see docs/redesign-brief.md).
-   Warm, grouped-by-urgency layout. Tokens only, so dark mode is automatic. */
+/* Tasks — field notes. Urgency bands as typewriter stamps over dashed-rule
+   lists; priority as pencil ticks; ONE marker swipe on the most-pressing
+   task's title. Tokens only; dark mode automatic. */
 
-/* ---- quieter, pill-styled filter toolbar ---- */
-.task-toolbar { gap: 8px; align-items: center; }
+/* filters: bare mono selects on an underline, no pill chrome */
+.task-toolbar { gap: 14px; align-items: center; }
 .task-toolbar .flt {
-  flex-direction: row; align-items: center; gap: 6px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 999px; padding: 4px 6px 4px 12px;
-  font-size: 12px; color: var(--text-dim); font-weight: 500;
+  flex-direction: row; align-items: baseline; gap: 6px;
+  background: none; border: none; padding: 0;
+  font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-dim);
 }
 .task-toolbar .flt select {
-  border: none; background: none; padding: 3px 4px; border-radius: 999px;
-  color: var(--text); font-weight: 500; cursor: pointer; outline: none;
+  border: none; border-bottom: 1px solid var(--border); border-radius: 0;
+  background: none; padding: 2px 0; color: var(--text); cursor: pointer; outline: none;
+  font-family: var(--font-mono); font-size: 11.5px; text-transform: none; letter-spacing: .02em;
 }
-.task-toolbar .flt:focus-within { border-color: var(--accent); }
+.task-toolbar .flt select:focus { border-bottom-color: var(--accent); }
 
-/* ---- urgency bands: warm section headers instead of one flat list ---- */
-.task-band { margin-bottom: 18px; }
+/* urgency bands: mono stamp headers, dashed-rule lists */
+.task-band { margin-bottom: 20px; }
 .band-head {
-  display: flex; align-items: center; gap: 8px;
-  margin: 0 0 6px; padding: 0 4px;
-  font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em;
-  color: var(--text-dim); font-weight: 700;
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 0 0 4px; padding: 0;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--text-dim); font-weight: 400; font-family: var(--font-mono);
 }
-.band-count {
-  font-size: 11px; font-weight: 600; color: var(--text-dim);
-  background: var(--surface-2); border-radius: 999px; padding: 0 7px; line-height: 18px;
-}
-/* Overdue band gets a thin danger accent on its header. */
-.band-overdue .band-head { color: var(--danger); }
-.band-overdue .band-count {
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-}
-.band-today .band-head { color: var(--accent); }
+.band-count { font-size: 11px; color: var(--text-dim); }
+.band-count::before { content: '· '; }
+.band-overdue .band-head, .band-overdue .band-count { color: var(--danger); }
+.band-today .band-head { color: var(--text); }
 
-/* The rows list within a band sits on a warm surface card. */
 .task-band .rows {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 4px 12px; overflow: hidden;
+  background: transparent; border: none; border-top: 1px dashed var(--border);
+  border-radius: 0; box-shadow: none; padding: 2px 0; overflow: visible;
 }
 
-/* ---- rows: thin left accent gives variation without filled badges ---- */
-.row-accent { position: relative; padding-left: 12px; }
+/* priority = a small pencil tick in the left margin */
+.row-accent { position: relative; padding-left: 10px; }
 .row-accent::before {
-  content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
-  width: 3px; border-radius: 3px; background: transparent;
+  content: ''; position: absolute; left: 0; top: 14px; width: 5px; height: 5px;
+  border-radius: 50%; background: transparent;
 }
 .row-accent.pri-high::before { background: var(--danger); }
 .row-accent.pri-medium::before { background: var(--amber); }
-.row-accent.pri-low::before { background: var(--accent-soft); }
 
-.row-icon {
-  font-size: 15px; line-height: 1; margin-top: 3px; flex-shrink: 0;
-  width: 18px; text-align: center;
+/* the ONE marker swipe: the single most-pressing task's title */
+.row.is-hero { background: transparent; border-radius: 0; }
+.row.is-hero .row-title {
+  display: inline;
+  background: linear-gradient(0deg, var(--highlight) 46%, transparent 46%);
+  padding: 0 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone;
 }
-
-/* ---- the ONE saturated moment: the single most-pressing task ---- */
-.row.is-hero {
-  background: color-mix(in srgb, var(--highlight) 9%, transparent);
-  border-radius: 10px;
-}
-.row.is-hero::before {
-  background: var(--highlight); width: 4px; top: 6px; bottom: 6px;
-}
-.row.is-hero .row-title { font-weight: 600; }
-.row.is-hero:hover { background: color-mix(in srgb, var(--highlight) 14%, transparent); }
+.row.is-hero:hover { background: var(--surface-2); }
 
 @media (max-width: 760px) {
-  .task-toolbar { gap: 6px; }
-  .task-toolbar .flt { padding: 3px 5px 3px 10px; font-size: 11.5px; }
+  .task-toolbar { gap: 10px; }
 }

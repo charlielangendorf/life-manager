@@ -8,7 +8,6 @@ import {
 } from '../utils.js';
 import { entityRow, bindRows } from './shared.js';
 import { openEditor } from '../taskModal.js';
-import { iconFor } from '../icons.js';
 
 let mode = 'month';
 let anchor = todayKey();
@@ -26,11 +25,10 @@ function dayItems(day) {
 
 function chip(e) {
   const t = timeOf(whenOf(e));
-  const icon = iconFor(e);
   return `
     <div class="cal-chip ${e.type} ${e.status === 'done' ? 'done' : ''} pri-${e.priority || 'none'}"
          data-id="${e.id}" title="${escapeHtml(e.title)}">
-      ${icon ? `<span class="cal-chip-icon" aria-hidden="true">${icon}</span>` : ''}${t ? `<b>${fmtTime(t)}</b> ` : ''}${escapeHtml(e.title)}
+      ${t ? `<b>${fmtTime(t)}</b> ` : ''}${escapeHtml(e.title)}
     </div>`;
 }
 

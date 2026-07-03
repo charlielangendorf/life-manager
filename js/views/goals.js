@@ -12,7 +12,6 @@
 import { store } from '../store.js';
 import { uid, escapeHtml, relativeDue, parseDate, todayKey } from '../utils.js';
 import { showToast } from '../toast.js';
-import { iconFor } from '../icons.js';
 
 // UI state kept at module level so it survives store-triggered re-renders.
 const expanded = new Set();
@@ -83,19 +82,15 @@ function progressBar(pct) {
     </div>`;
 }
 
-// Content glyph for a goal, or a tinted first-letter chip fallback.
-function goalGlyph(goal, hero) {
-  const icon = iconFor(goal);
-  const cls = hero ? 'goal-glyph is-hero' : 'goal-glyph';
-  if (icon) return `<span class="${cls}" aria-hidden="true">${icon}</span>`;
-  const letter = (goal.title || '?').trim().charAt(0).toUpperCase() || '?';
-  return `<span class="${cls} is-letter" aria-hidden="true">${escapeHtml(letter)}</span>`;
+// Field notes: no glyphs — typography carries the hierarchy.
+function goalGlyph() {
+  return '';
 }
 
 // Quiet feeder summary: small counts with a tinted icon, supporting detail only.
 function feederSummary(f) {
   const bits = [];
-  if (f.openTasks.length) bits.push(`<span class="goal-feed-chip">✔ ${f.openTasks.length} open task${f.openTasks.length === 1 ? '' : 's'}</span>`);
+  if (f.openTasks.length) bits.push(`<span class="goal-feed-chip">${f.openTasks.length} open task${f.openTasks.length === 1 ? '' : 's'}</span>`);
   if (f.doneTasks.length) bits.push(`<span class="goal-feed-chip is-quiet">${f.doneTasks.length} done</span>`);
   if (f.habits.length) bits.push(`<span class="goal-feed-chip">↻ ${f.habits.length} habit${f.habits.length === 1 ? '' : 's'}</span>`);
   if (!bits.length) return '';
@@ -128,7 +123,7 @@ function milestoneTimeline(goal) {
 }
 
 function feederDetail(f) {
-  const li = (e) => `<li><span class="goal-link-glyph" aria-hidden="true">${iconFor(e) || '·'}</span>${escapeHtml(e.title)}</li>`;
+  const li = (e) => `<li><span class="goal-link-glyph" aria-hidden="true">·</span>${escapeHtml(e.title)}</li>`;
   const section = (label, items) => (items.length
     ? `<div class="goal-feeder-group">
          <div class="section-label">${label}</div>
@@ -171,7 +166,7 @@ function goalCard(goal, hero = false) {
         </div>
         <span class="spacer"></span>
         <div class="goal-head-actions">
-          <button class="icon-btn" data-action="edit" title="Edit goal" aria-label="Edit goal">✏️</button>
+          <button class="goal-txt-btn" data-action="edit" aria-label="Edit goal">edit</button>
           <button class="ghost-btn goal-done-btn" data-action="toggle-done">${done ? 'Reopen' : 'Mark done'}</button>
         </div>
       </div>
@@ -220,7 +215,6 @@ function emptyState() {
   return `
     <section class="card goal-empty">
       <div class="empty">
-        <div class="goal-empty-icon" aria-hidden="true">🎯</div>
         <h2>No goals yet</h2>
         <p>Goals are the bigger outcomes you're working toward. Break each
           one into milestones, then link tasks and habits to it from their editors —
