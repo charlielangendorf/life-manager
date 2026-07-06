@@ -35,14 +35,30 @@
   border-radius: 0; box-shadow: none; padding: 2px 0; overflow: visible;
 }
 
-/* priority = a small pencil tick in the left margin */
-.row-accent { position: relative; padding-left: 10px; }
+/* priority = a margin mark, sized to read at a glance.
+   medium = one solid amber dot; high = a doubled red mark (two stacked
+   ticks, a "‼"-feel) drawn with the dot + its ::after — still marginalia,
+   never a filled badge. */
+.row-accent { position: relative; padding-left: 15px; }
 .row-accent::before {
-  content: ''; position: absolute; left: 0; top: 14px; width: 5px; height: 5px;
+  content: ''; position: absolute; left: 2px; top: 13px; width: 8px; height: 8px;
   border-radius: 50%; background: transparent;
 }
-.row-accent.pri-high::before { background: var(--danger); }
 .row-accent.pri-medium::before { background: var(--amber); }
+.row-accent.pri-high::before { background: var(--danger); }
+/* high gets a second stacked dot below the first — the doubled red mark. */
+.row-accent.pri-high::after {
+  content: ''; position: absolute; left: 2px; top: 23px; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--danger);
+}
+
+/* color-coded projects: same project always reads in the same ink.
+   Text color only — badges stay transparent typewriter marginalia. */
+.badge-project.proj-c0 { color: var(--amber); }
+.badge-project.proj-c1 { color: var(--green); }
+.badge-project.proj-c2 { color: var(--pink); }
+.badge-project.proj-c3 { color: var(--accent); }
+.badge-project.proj-c4 { color: var(--text-dim); }
 
 /* the ONE marker swipe: the single most-pressing task's title */
 .row.is-hero { background: transparent; border-radius: 0; }

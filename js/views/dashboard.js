@@ -83,7 +83,9 @@ function overdueStrip(overdue, nextId) {
     </section>`;
 }
 
-function timelineNode(entity, nextId) {
+// `allDay` marks a date-spanning event that began on an earlier day and is still
+// in progress today — it carries no time label, just a quiet "all day" mono mark.
+function timelineNode(entity, nextId, allDay = false) {
   const isTask = entity.type === 'task';
   const done = entity.status === 'done';
   const when = entity.type === 'event' ? entity.date : entity.dueDate;
@@ -92,17 +94,21 @@ function timelineNode(entity, nextId) {
   const marker = isTask
     ? `<button class="check tl-check ${done ? 'checked' : ''}" data-action="toggle" aria-label="Toggle complete"></button>`
     : '<span class="tl-node"></span>';
+  const timeLabel = allDay ? 'all day' : (t ? fmtTime(t) : '');
   return `
-    <div class="tl-item ${done ? 'done' : ''} ${isNext ? 'is-next' : ''}" data-id="${entity.id}">
-      <span class="tl-time">${escapeHtml(t ? fmtTime(t) : '')}</span>
+    <div class="tl-item ${done ? 'done' : ''} ${isNext ? 'is-next' : ''} ${allDay ? 'tl-allday' : ''}" data-id="${entity.id}">
+      <span class="tl-time">${escapeHtml(timeLabel)}</span>
       ${marker}
       <div class="tl-main"><span class="tl-title">${escapeHtml(entity.title)}</span></div>
     </div>`;
 }
 
-function timelineSection(timed, untimed, nextId) {
-  if (!timed.length && !untimed.length) return '';
+// Date-spanning events (started earlier, still in progress) sit at the very top
+// with no time; then timed items, then untimed.
+function timelineSection(spanning, timed, untimed, nextId) {
+  if (!spanning.length && !timed.length && !untimed.length) return '';
   const nodes = [
+    ...spanning.map((e) => timelineNode(e, nextId, true)),
     ...timed.map((e) => timelineNode(e, nextId)),
     ...untimed.map((e) => timelineNode(e, nextId)),
   ].join('');
@@ -184,8 +190,15 @@ export function render(container) {
   const doneToday = tasks.filter(
     (t) => t.status === 'done' && (t.extra?.completedAt || '').slice(0, 10) === today,
   );
-  const events = store.all('event')
+  const allEvents = store.all('event');
+  const events = allEvents
     .filter((e) => e.date && e.date.slice(0, 10) === today)
+    .sort(byWhen);
+  // In-progress multi-day events: started on an EARLIER day, end day (dueDate)
+  // is today or later. These get an "all day" node pinned to the top of today.
+  const spanning = allEvents
+    .filter((e) => e.date && e.dueDate
+      && e.date.slice(0, 10) < today && today <= e.dueDate.slice(0, 10))
     .sort(byWhen);
 
   const timedTasks = dueToday.filter((t) => timeOf(t.dueDate));
@@ -198,7 +211,7 @@ export function render(container) {
 
   const habitsDue = store.all('habit').some((h) => needsToday(h, today));
   const allEmpty = !overdue.length && !dueToday.length && !events.length
-    && !upcoming.length && !habitsDue && !doneToday.length;
+    && !spanning.length && !upcoming.length && !habitsDue && !doneToday.length;
 
   const pick = upNext({ overdue, timed, dueToday: untimedTasks.length ? untimedTasks : dueToday });
   const nextId = pick?.entity.id || null;
@@ -206,7 +219,7 @@ export function render(container) {
   container.innerHTML = `
     <header class="dash-head">
       ${dateStamp(today)}
-      <h1 class="dash-title">${headlineHtml({ overdue, dueToday, events, upcoming, habitsDue })}</h1>
+      <h1 class="dash-title">${headlineHtml({ overdue, dueToday, events: [...events, ...spanning], upcoming, habitsDue })}</h1>
       ${upNextNote(pick)}
     </header>
 
@@ -215,7 +228,7 @@ export function render(container) {
     </form>
 
     ${overdueStrip(overdue, nextId)}
-    ${timelineSection(timed, untimedTasks, nextId)}
+    ${timelineSection(spanning, timed, untimedTasks, nextId)}
     ${habitsSection(today)}
     ${upcomingSection(upcoming)}
     ${completedSection(doneToday)}

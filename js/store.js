@@ -7,6 +7,24 @@ const DATA_KEY = 'lifeman.data.v1';
 const SETTINGS_KEY = 'lifeman.settings.v1';
 const TOMBSTONE_TTL_MS = 1000 * 60 * 60 * 24 * 60; // 60 days
 
+// type -> remote file. Tasks and events share a file (both live on the
+// calendar); every other module gets its own.
+const FILE_OF = {
+  task: 'tasks.json',
+  event: 'tasks.json',
+  habit: 'habits.json',
+  goal: 'goals.json',
+  journal: 'journal.json',
+  contact: 'contacts.json',
+  reading: 'reading.json',
+  finance: 'finance.json',
+  bookmark: 'bookmarks.json',
+  trip: 'trips.json',
+};
+
+export const DATA_FILES = [...new Set(Object.values(FILE_OF)), 'misc.json'];
+export const LEGACY_FILE = 'data.json';
+
 export function loadSettings() {
   try {
     return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
@@ -119,6 +137,42 @@ class Store {
       entities: this.entities,
       deleted: this.deleted,
     });
+  }
+
+  // ---- per-module file layout (GitHub storage) ----
+  // Remote storage is split into one JSON file per module so each commit
+  // touches only the module that changed and files stay small. Local
+  // persistence (localStorage) remains a single blob. Tombstones are tiny
+  // (pruned at 60 days) and are replicated into every file so deletions
+  // merge correctly regardless of which file another device pulls first.
+
+  fileForEntity(entity) {
+    return FILE_OF[entity?.type] || 'misc.json';
+  }
+
+  // Snapshot of one module file's document.
+  docForFile(file) {
+    return structuredClone({
+      version: 2,
+      updatedAt: new Date().toISOString(),
+      entities: this.entities.filter((e) => this.fileForEntity(e) === file),
+      deleted: this.deleted,
+    });
+  }
+
+  // True when local state for this file matches the given remote doc.
+  docEqualsFile(file, doc) {
+    const sig = (list) =>
+      JSON.stringify((list || []).map((e) => [e.id, e.updatedAt]).sort((a, b) => (a[0] < b[0] ? -1 : 1)));
+    const deadSig = (map) => JSON.stringify(Object.entries(map || {}).sort());
+    const local = this.entities.filter((e) => this.fileForEntity(e) === file);
+    return sig(local) === sig(doc?.entities) && deadSig(this.deleted) === deadSig(doc?.deleted);
+  }
+
+  // Files that currently hold content (used to decide what to push on migration).
+  filesWithContent() {
+    const set = new Set(this.entities.map((e) => this.fileForEntity(e)));
+    return DATA_FILES.filter((f) => set.has(f));
   }
 
   // Entity-level last-write-wins merge of a remote doc into local state.

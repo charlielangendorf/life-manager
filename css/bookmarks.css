@@ -1,0 +1,49 @@
+/* Links vault — field notes clippings file. Tokens only; dark automatic. */
+
+.bm-quick { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.bm-quick input {
+  padding: 9px 2px; border: none; border-bottom: 1px solid var(--border);
+  background: none; outline: none; color: var(--text);
+  font-family: var(--font-serif); font-size: 14px;
+}
+.bm-quick input::placeholder { color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; }
+.bm-quick input:focus { border-bottom-color: var(--accent); }
+.bm-quick input.invalid { border-bottom-color: var(--danger); }
+#bm-url { flex: 2; min-width: 200px; }
+#bm-title { flex: 1; min-width: 140px; }
+
+.bm-lines { display: flex; flex-direction: column; }
+.bm-line {
+  display: flex; align-items: baseline; gap: 12px; padding: 8px 2px;
+  border-bottom: 1px dashed var(--border); flex-wrap: wrap;
+}
+.bm-lines .bm-line:last-child { border-bottom: none; }
+
+.bm-link { font-family: var(--font-serif); font-size: 14.5px; color: var(--text); overflow-wrap: anywhere; }
+a.bm-link { text-decoration: underline dotted; text-underline-offset: 3px; }
+a.bm-link:hover { color: var(--accent); }
+.bm-bad-url { font-family: var(--font-mono); font-size: 10.5px; color: var(--danger); }
+.bm-host { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; color: var(--text-dim); }
+.bm-tags { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .05em; color: var(--text-dim); }
+
+.bm-txt-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  color: var(--text-dim); text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.bm-txt-btn:hover { color: var(--accent); }
+
+#b-title {
+  font-size: 18px; font-weight: 400; font-family: var(--font-serif);
+  border: none; border-bottom: 1.5px solid var(--border);
+  background: none; padding: 8px 2px; outline: none; width: 100%;
+}
+#b-title:focus { border-bottom-color: var(--accent); }
+#b-title.invalid { border-bottom-color: var(--danger); }
+#b-url.invalid { border-color: var(--danger); }
+
+.bm-empty { text-align: center; padding: 26px 12px; }
+.bm-empty-line {
+  font-family: var(--font-serif); font-size: 16px; color: var(--text-dim);
+  max-width: 420px; margin: 0 auto; line-height: 1.6;
+}

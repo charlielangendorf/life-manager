@@ -5,6 +5,18 @@ import { escapeHtml, relativeDue, timeOf, fmtTime, todayKey } from '../utils.js'
 import { recurrenceLabel } from '../models.js';
 import { openEditor } from '../taskModal.js';
 
+// Deterministically map a project name to one of 5 stable ink classes
+// (proj-c0..proj-c4) so the same project always renders in the same color.
+// Pure: a small FNV-ish string hash folded into 5 buckets.
+export function projectClass(name) {
+  const s = String(name || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  }
+  return `proj-c${h % 5}`;
+}
+
 export function entityRow(e) {
   const done = e.status === 'done';
   const when = e.type === 'event' ? e.date : e.dueDate;
@@ -13,7 +25,7 @@ export function entityRow(e) {
   const rec = e.extra?.recurrence;
 
   const meta = [];
-  if (e.project) meta.push(`<span class="badge badge-project">${escapeHtml(e.project)}</span>`);
+  if (e.project) meta.push(`<span class="badge badge-project ${projectClass(e.project)}">${escapeHtml(e.project)}</span>`);
   const linkedGoal = (e.linkedTo || []).map((id) => store.get(id)).find((g) => g?.type === 'goal');
   if (linkedGoal) {
     const t = linkedGoal.title || '';

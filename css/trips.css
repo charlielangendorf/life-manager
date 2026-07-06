@@ -1,0 +1,66 @@
+/* Trips — field notes packing lists. Tokens only; dark automatic. */
+
+.trip-sec { border-top: 1px dashed var(--border); padding: 14px 2px 12px; }
+
+.trip-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.trip-name { font-family: var(--font-serif); font-size: 17px; overflow-wrap: anywhere; }
+.trip-stamp {
+  display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: .08em; color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 3px; padding: 2px 8px;
+  transform: rotate(-1deg);
+}
+.trip-soon {
+  font-family: var(--font-serif); font-style: italic; font-size: 13px;
+  color: var(--accent); transform: rotate(-1.2deg); display: inline-block;
+}
+
+.trip-notes { margin-top: 4px; font-family: var(--font-serif); font-size: 13.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+
+.trip-txt-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  color: var(--text-dim); text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.trip-txt-btn:hover { color: var(--accent); }
+
+.trip-checklist { margin-top: 10px; max-width: 520px; }
+.trip-check-count { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 4px; }
+.trip-check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.trip-check-row .check { margin-top: 0; }
+.trip-check-row:nth-child(even) .check { transform: rotate(1.1deg); }
+.trip-check-title { font-family: var(--font-serif); font-size: 14px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.trip-check-title.is-done { text-decoration: line-through; color: var(--text-dim); }
+.trip-check-remove { opacity: 0; text-decoration: none; }
+.trip-check-row:hover .trip-check-remove { opacity: 1; }
+
+.trip-add-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.trip-add-input {
+  flex: 1; padding: 5px 2px; border: none; border-bottom: 1px solid var(--border);
+  background: none; outline: none; font-family: var(--font-serif); font-size: 14px;
+  color: var(--text);
+}
+.trip-add-input:focus { border-bottom-color: var(--accent); }
+
+.trip-past { margin-top: 8px; }
+.trip-past-head {
+  background: none; border: none; cursor: pointer; color: var(--text-dim);
+  font-family: var(--font-mono); font-size: 10.5px; padding: 8px 2px;
+  text-transform: uppercase; letter-spacing: .12em;
+}
+.trip-past-head:hover { color: var(--text); }
+.trip-past .trip-sec { opacity: .65; }
+
+#t-title {
+  font-size: 18px; font-weight: 400; font-family: var(--font-serif);
+  border: none; border-bottom: 1.5px solid var(--border);
+  background: none; padding: 8px 2px; outline: none; width: 100%;
+}
+#t-title:focus { border-bottom-color: var(--accent); }
+#t-title.invalid { border-bottom-color: var(--danger); }
+
+.trip-empty { text-align: center; padding: 26px 12px; }
+.trip-empty-line {
+  font-family: var(--font-serif); font-size: 16px; color: var(--text-dim);
+  max-width: 420px; margin: 0 auto 16px; line-height: 1.6;
+}

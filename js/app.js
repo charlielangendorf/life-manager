@@ -11,13 +11,24 @@ import * as habits from './views/habits.js';
 import * as goals from './views/goals.js';
 import * as journal from './views/journal.js';
 import * as focus from './views/focus.js';
+import * as contacts from './views/contacts.js';
+import * as reading from './views/reading.js';
+import * as finance from './views/finance.js';
+import * as bookmarks from './views/bookmarks.js';
+import * as trips from './views/trips.js';
 import * as settings from './views/settings.js';
 
-const routes = { dashboard, tasks, calendar, habits, goals, journal, focus, settings };
+const routes = {
+  dashboard, tasks, calendar, habits, goals, journal, focus,
+  contacts, reading, finance, bookmarks, trips, settings,
+};
 
 // Where a non-task entity "lives" — search results navigate there instead of
 // opening the task editor.
-const TYPE_ROUTE = { habit: 'habits', goal: 'goals', journal: 'journal' };
+const TYPE_ROUTE = {
+  habit: 'habits', goal: 'goals', journal: 'journal', contact: 'contacts',
+  reading: 'reading', finance: 'finance', bookmark: 'bookmarks', trip: 'trips',
+};
 const main = document.getElementById('view');
 let current = 'dashboard';
 
@@ -144,3 +155,10 @@ window.addEventListener('beforeunload', () => {
 window.addEventListener('hashchange', route);
 route();
 if (sync.configured()) sync.pull();
+
+// PWA: installable app shell with offline fallback (sw.js is same-origin
+// network-first, so GitHub API calls are never intercepted).
+if ('serviceWorker' in navigator
+  && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}

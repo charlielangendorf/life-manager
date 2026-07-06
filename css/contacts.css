@@ -1,0 +1,73 @@
+/* Contacts — field notes. A people ledger: ruled lines, serif names, mono
+   margin notes, red-pencil follow-up annotations, one marker swipe on the
+   most-overdue name. Tokens only; dark mode automatic. */
+
+.contact-lines { display: flex; flex-direction: column; }
+
+.contact-line { padding: 11px 2px 9px; border-bottom: 1px dashed var(--border); }
+.contact-lines .contact-line:last-child { border-bottom: none; }
+
+.contact-line-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.contact-name {
+  font-family: var(--font-serif); font-size: 16px; overflow-wrap: anywhere;
+}
+/* the single marker swipe: the most-overdue follow-up name */
+.contact-name.swipe {
+  background: linear-gradient(0deg, var(--highlight) 46%, transparent 46%);
+  padding: 0 3px; color: var(--text);
+}
+
+/* red-pencil follow-up annotation — serif italic, a hair off-axis */
+.contact-followup {
+  font-family: var(--font-serif); font-style: italic; font-size: 13px;
+  color: var(--danger); transform: rotate(-1deg); display: inline-block;
+  white-space: nowrap;
+}
+
+/* mono "last touched <relative>" marginalia */
+.contact-touched {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em;
+  color: var(--text-dim); white-space: nowrap;
+}
+.contact-touched.never { font-style: italic; opacity: .8; }
+
+.contact-line-actions { display: inline-flex; gap: 10px; }
+.contact-txt-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  color: var(--text-dim); text-decoration: underline dotted;
+  text-underline-offset: 3px; white-space: nowrap;
+}
+.contact-txt-btn:hover { color: var(--accent); }
+
+.contact-meta-line {
+  display: block; margin: 3px 0 0; font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: .03em; color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.contact-sub {
+  margin: 3px 0 0; font-family: var(--font-serif); font-size: 13.5px;
+  color: var(--text-dim); overflow-wrap: anywhere;
+}
+
+/* contact modal title — mirror #f-title so the input reads as a serif line,
+   not a default white box on paper */
+#c-title {
+  font-size: 18px; font-weight: 400; font-family: var(--font-serif);
+  border: none; border-bottom: 1.5px solid var(--border);
+  background: none; padding: 8px 2px; outline: none; width: 100%;
+}
+#c-title:focus { border-bottom-color: var(--accent); }
+#c-title.invalid { border-bottom-color: var(--danger); }
+
+/* warm empty state */
+.contact-empty { text-align: center; padding: 30px 12px; }
+.contact-empty-line {
+  font-family: var(--font-serif); font-size: 16px; color: var(--text-dim);
+  max-width: 420px; margin: 0 auto 16px; line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .contact-line-top { gap: 8px; }
+  .contact-name { font-size: 15px; }
+}

@@ -382,8 +382,14 @@ main#view { padding: 22px; max-width: 1080px; width: 100%; margin: 0 auto; }
     background: var(--surface); z-index: 80;
   }
   .logo, .sidebar-foot { display: none; }
-  .sidebar nav { flex-direction: row; width: 100%; justify-content: space-around; }
-  .sidebar nav a { flex-direction: column; gap: 2px; font-size: 11px; padding: 6px 10px; }
+  /* 13 sections: the bottom bar scrolls sideways instead of cramming. */
+  .sidebar nav {
+    flex-direction: row; width: 100%; justify-content: flex-start;
+    gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sidebar nav::-webkit-scrollbar { display: none; }
+  .sidebar nav a { flex-direction: column; gap: 2px; font-size: 11px; padding: 6px 10px; flex-shrink: 0; }
   main#view { padding: 14px 12px 90px; }
   .topbar { padding: 10px 12px; }
   .form-grid { grid-template-columns: 1fr; }

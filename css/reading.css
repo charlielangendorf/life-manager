@@ -1,0 +1,51 @@
+/* Reading — field notes book ledger. Tokens only; dark automatic. */
+
+.read-lines { display: flex; flex-direction: column; }
+.read-line { padding: 10px 2px 8px; border-bottom: 1px dashed var(--border); }
+.read-lines .read-line:last-child { border-bottom: none; }
+
+.read-line-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.read-title { font-family: var(--font-serif); font-size: 15.5px; overflow-wrap: anywhere; }
+.read-line.is-done .read-title { color: var(--text-dim); }
+.read-title.swipe {
+  background: linear-gradient(0deg, var(--highlight) 46%, transparent 46%);
+  padding: 0 3px;
+}
+
+.read-line-actions { display: inline-flex; gap: 10px; }
+.read-txt-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  color: var(--text-dim); text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.read-txt-btn:hover { color: var(--accent); }
+
+.read-sub { margin-top: 2px; }
+.read-meta-line { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .05em; color: var(--text-dim); }
+
+.read-takeaway {
+  margin-top: 4px; font-family: var(--font-serif); font-style: italic;
+  font-size: 13.5px; color: var(--text-dim); overflow-wrap: anywhere;
+}
+
+.read-finish-edit { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.read-takeaway-input {
+  flex: 1; padding: 5px 2px; border: none; border-bottom: 1px solid var(--border);
+  background: none; outline: none; font-family: var(--font-serif); font-size: 14px;
+  color: var(--text);
+}
+.read-takeaway-input:focus { border-bottom-color: var(--accent); }
+
+#r-title {
+  font-size: 18px; font-weight: 400; font-family: var(--font-serif);
+  border: none; border-bottom: 1.5px solid var(--border);
+  background: none; padding: 8px 2px; outline: none; width: 100%;
+}
+#r-title:focus { border-bottom-color: var(--accent); }
+#r-title.invalid { border-bottom-color: var(--danger); }
+
+.read-empty { text-align: center; padding: 26px 12px; }
+.read-empty-line {
+  font-family: var(--font-serif); font-size: 16px; color: var(--text-dim);
+  max-width: 420px; margin: 0 auto 16px; line-height: 1.6;
+}

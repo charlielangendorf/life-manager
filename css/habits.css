@@ -67,6 +67,17 @@
 }
 .habit-note-input:focus { border-bottom-color: var(--accent); }
 
+/* habit modal title — mirror the task modal's #f-title (styles.css):
+   serif, transparent, bottom-border only, accent on focus, danger when invalid.
+   Without this the input renders as a default white browser box on paper. */
+#h-title {
+  font-size: 18px; font-weight: 400; font-family: var(--font-serif);
+  border: none; border-bottom: 1.5px solid var(--border);
+  background: none; padding: 8px 2px; outline: none; width: 100%;
+}
+#h-title:focus { border-bottom-color: var(--accent); }
+#h-title.invalid { border-bottom-color: var(--danger); }
+
 .habit-empty { text-align: center; padding: 30px 12px; }
 .habit-empty-line {
   font-family: var(--font-serif); font-size: 16px; color: var(--text-dim);

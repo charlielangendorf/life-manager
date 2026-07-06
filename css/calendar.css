@@ -51,6 +51,18 @@
 .cal-chip.done { text-decoration: line-through; opacity: .5; }
 .cal-more { font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; }
 
+/* Projected recurrence (ghost) + multi-day continuation: quieter margins, a
+   dashed accent, and a mono stamp instead of a time. Kept faint and pencil-like
+   so real, actionable items read first. */
+.cal-chip.ghost { border-left-style: dashed; color: var(--text-dim); }
+.cal-chip.cont { color: var(--text-dim); }
+.cal-chip.ghost b, .cal-chip.cont b { color: var(--text-dim); }
+.cal-cont-mark, .cal-ghost-mark {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .04em;
+  color: var(--text-dim); font-weight: 400; text-transform: lowercase;
+}
+.cal-ghost-mark { font-style: normal; }
+
 /* week view: columns on a dashed rail with ink dots */
 .cal-week { gap: 0; border: 1px solid var(--border); }
 .cal-week-col {
@@ -102,6 +114,15 @@
   letter-spacing: .03em; color: var(--text-dim); white-space: nowrap;
 }
 .tl-row .row { border-bottom: none; }
+
+/* day view — ghost occurrence + multi-day continuation rows: read-only, quiet.
+   A dashed left accent marks them as projected, not independently completable. */
+.cal-ghost-row {
+  border-left: 2px dashed var(--border); padding-left: 8px; opacity: .8;
+}
+.cal-ghost-row .row-title { color: var(--text-dim); }
+.tl-ghost .tl-time, .tl-cont .tl-time { color: var(--text-dim); white-space: normal; line-height: 1.2; }
+.tl-ghost::before, .tl-cont::before { background: transparent; border: 1px dashed var(--text-dim); }
 
 .cal-title { font-family: var(--font-serif); font-size: 16px; }
 

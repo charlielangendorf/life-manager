@@ -19,6 +19,18 @@ function sortList(list, sort) {
       (a, b) => (PRI_ORDER[a.priority] ?? 3) - (PRI_ORDER[b.priority] ?? 3)
         || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'),
     );
+  } else if (sort === 'project') {
+    // Project name A→Z; tasks with no project sort last; ties by due date.
+    copy.sort((a, b) => {
+      const ap = a.project || '';
+      const bp = b.project || '';
+      if (ap !== bp) {
+        if (!ap) return 1;
+        if (!bp) return -1;
+        return ap.localeCompare(bp);
+      }
+      return (a.dueDate || '9999').localeCompare(b.dueDate || '9999');
+    });
   } else if (sort === 'created') {
     copy.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   } else if (sort === 'title') {
@@ -103,7 +115,7 @@ function draw(container) {
       ${sel('flt-project', 'Project', [['', 'All projects'], ...projects.map((p) => [p, p])], state.project)}
       ${sel('flt-tag', 'Tag', [['', 'All tags'], ...tags.map((t) => [t, '#' + t])], state.tag)}
       ${sel('flt-priority', 'Priority', [['', 'Any'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low']], state.priority)}
-      ${sel('flt-sort', 'Sort by', [['due', 'Due date'], ['priority', 'Priority'], ['created', 'Newest'], ['title', 'Title']], state.sort)}
+      ${sel('flt-sort', 'Sort by', [['due', 'Due date'], ['priority', 'Priority'], ['project', 'Project'], ['created', 'Newest'], ['title', 'Title']], state.sort)}
     </div>
     ${sections || '<div class="card"><div class="empty">No tasks match these filters.</div></div>'}`;
 }

@@ -136,7 +136,32 @@ js/
 test/smoke.mjs        Node tests for the DOM-free logic
 ```
 
+## Phase 3 features (implemented)
+
+- **Contacts** — a people ledger with last-contacted tracking, one-tap
+  "touched today", and follow-up reminders that surface when due
+- **Reading library** — to read / reading / finished bands, with a one-line
+  takeaway captured when you finish something
+- **Finance** — net-worth snapshots over time (with sparkline), recurring
+  bills, and monthly budget vs. actual
+- **Links vault** — bookmarks grouped by project (http/https only; unsafe
+  URLs never render as links)
+- **Trips** — itineraries with packing checklists; past trips fold away
+- **Calendar upgrades** — multi-day events (start + end date) and recurring
+  items now project ghost occurrences onto future days
+- **Mobile / PWA** — installable (manifest + icons), offline app shell via a
+  same-origin service worker, scrollable bottom nav
+
+## Storage layout (v2)
+
+Remote data is split into **one JSON file per module** (`tasks.json`,
+`habits.json`, `goals.json`, `journal.json`, `contacts.json`, `reading.json`,
+`finance.json`, `bookmarks.json`, `trips.json`) so each commit touches only
+what changed and files stay small. Each file has its own sha and conflict
+handling. A repo still holding a single legacy `data.json` is migrated
+automatically on the next connect (the old file is left in place, ignored).
+
 ## Roadmap (from the spec)
 
-- **Phase 3:** contacts, reading library, finance snapshot, links vault, trip
-  checklists, natural-language quick-add, drag-and-drop
+- Natural-language quick-add, drag-and-drop reordering / calendar drops
+- Analytics, browser notifications, pomodoro, weather (stretch)

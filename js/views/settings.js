@@ -27,8 +27,10 @@ export function render(container) {
     <section class="card">
       <h2>GitHub sync</h2>
       <p class="hint">
-        Your data is stored as a JSON file in a <b>private</b> GitHub repo via the Contents API,
+        Your data is stored as one JSON file per module (tasks.json, habits.json, …)
+        in a <b>private</b> GitHub repo via the Contents API,
         and every change becomes a commit — the repo history is your changelog.
+        A repo still holding a single legacy data.json is migrated automatically on connect.
         Create a <b>fine-grained personal access token</b> scoped to <i>only</i> that repo with
         <b>Contents: read &amp; write</b> permission (GitHub → Settings → Developer settings →
         Fine-grained tokens). The token lives in this browser's localStorage only — it is never
@@ -38,7 +40,7 @@ export function render(container) {
         <label>Owner<input id="s-owner" value="${escapeHtml(s.owner || '')}" placeholder="your-github-username" autocomplete="off"></label>
         <label>Data repo (private)<input id="s-repo" value="${escapeHtml(s.repo || '')}" placeholder="life-data" autocomplete="off"></label>
         <label>Branch<input id="s-branch" value="${escapeHtml(s.branch || '')}" placeholder="main (default branch if blank)" autocomplete="off"></label>
-        <label>File path<input id="s-path" value="${escapeHtml(s.path || 'data.json')}" autocomplete="off"></label>
+        <label>Folder (optional)<input id="s-dir" value="${escapeHtml(s.dir || '')}" placeholder="repo root if blank" autocomplete="off"></label>
         <label class="full">Token<input id="s-token" type="password" value="${escapeHtml(s.token || '')}" placeholder="github_pat_…" autocomplete="off"></label>
       </div>
       <div class="btn-row">
@@ -83,7 +85,7 @@ export function render(container) {
       owner: $('#s-owner').value.trim(),
       repo: $('#s-repo').value.trim(),
       branch: $('#s-branch').value.trim(),
-      path: $('#s-path').value.trim() || 'data.json',
+      dir: $('#s-dir').value.trim().replace(/^\/+|\/+$/g, ''),
       token: $('#s-token').value.trim(),
     });
     sync.resetConnection();

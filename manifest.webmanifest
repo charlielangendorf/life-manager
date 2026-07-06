@@ -1,0 +1,14 @@
+{
+  "name": "Life Manager",
+  "short_name": "LIFE·MGR",
+  "description": "A paper-planner style life manager — tasks, calendar, habits, goals, journal — synced to your own private GitHub repo.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#faf6ec",
+  "theme_color": "#faf6ec",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

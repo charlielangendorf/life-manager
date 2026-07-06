@@ -1,0 +1,97 @@
+/* Finance — field notes. A paper account book: dated ledger rows with mono
+   amounts, dotted leader lines, red-pencil over-budget annotations, one
+   marker swipe on the latest net-worth total. Tokens only; dark automatic. */
+
+.fin-sections { display: flex; flex-direction: column; }
+.fin-section { border-top: 1px dashed var(--border); padding: 14px 2px 10px; margin-bottom: 8px; }
+
+.fin-sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.fin-sec-title {
+  margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--text-dim); font-weight: 400; font-family: var(--font-mono);
+}
+.fin-spark-wrap { color: var(--text-dim); display: inline-flex; align-items: center; }
+.fin-txt-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  color: var(--text-dim); text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.fin-txt-btn:hover { color: var(--accent); }
+.fin-empty { font-family: var(--font-serif); color: var(--text-dim); padding: 8px 0; }
+
+/* net-worth ledger: date · accounts ……… total */
+.fin-nw-ledger, .fin-bills { display: flex; flex-direction: column; }
+.fin-nw-row, .fin-bill-row {
+  display: flex; align-items: baseline; gap: 10px; padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.fin-nw-ledger .fin-nw-row:last-child, .fin-bills .fin-bill-row:last-child { border-bottom: none; }
+.fin-nw-date { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--text-dim); width: 64px; flex-shrink: 0; }
+.fin-nw-accounts { font-family: var(--font-serif); font-size: 13px; color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-nw-dash, .fin-bill-dash { flex: 1; border-bottom: 1px dotted var(--border); align-self: center; min-width: 20px; }
+.fin-nw-total { font-family: var(--font-mono); font-size: 14px; color: var(--text); }
+.fin-nw-total.swipe {
+  background: linear-gradient(0deg, var(--highlight) 46%, transparent 46%);
+  padding: 0 3px;
+}
+
+/* bills */
+.fin-bill-name { font-family: var(--font-serif); font-size: 14.5px; min-width: 0; overflow-wrap: anywhere; }
+.fin-bill-meta { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .05em; color: var(--text-dim); flex-shrink: 0; }
+.fin-bill-amount { font-family: var(--font-mono); font-size: 13px; }
+
+/* budget: month picker + planned/actual table */
+.fin-month-picker { display: inline-flex; align-items: center; gap: 8px; }
+.fin-month-nav {
+  background: none; border: 1px solid var(--border); border-radius: 3px;
+  cursor: pointer; color: var(--text-dim); padding: 1px 8px; font-size: 13px;
+}
+.fin-month-nav:hover { color: var(--text); border-color: var(--text-dim); }
+.fin-month-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text); }
+
+.fin-budget { display: flex; flex-direction: column; }
+.fin-budget-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 90px 90px auto;
+  gap: 10px; align-items: baseline; padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.fin-budget-cat { font-family: var(--font-serif); font-size: 14px; overflow-wrap: anywhere; }
+.fin-budget-planned, .fin-budget-actual { font-family: var(--font-mono); font-size: 12.5px; text-align: right; }
+.fin-budget-headrow {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border);
+}
+.fin-budget-headrow .fin-budget-cat,
+.fin-budget-headrow .fin-budget-planned,
+.fin-budget-headrow .fin-budget-actual { font-family: var(--font-mono); font-size: 10px; }
+.fin-budget-totalrow { border-bottom: none; border-top: 1px solid var(--border); }
+.fin-budget-totalrow .fin-budget-cat { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); }
+.fin-budget-row.is-over .fin-budget-actual { color: var(--danger); }
+.fin-budget-over {
+  font-family: var(--font-serif); font-style: italic; font-size: 12px;
+  color: var(--danger); transform: rotate(-1deg); display: inline-block;
+}
+
+/* modal extras: dynamic account/budget-line rows + running total */
+.fin-acct-row, .fin-bl-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.fin-acct-name, .fin-bl-cat {
+  flex: 1; padding: 6px 9px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--bg); outline: none;
+}
+.fin-acct-amount, .fin-bl-planned, .fin-bl-actual {
+  width: 110px; padding: 6px 9px; border-radius: 3px;
+  border: 1px solid var(--border); background: var(--bg); outline: none;
+  font-family: var(--font-mono); font-size: 13px; text-align: right;
+}
+.fin-acct-row input:focus, .fin-bl-row input:focus { border-color: var(--accent); }
+.fin-modal-total {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-dim); text-align: right; padding: 4px 2px;
+}
+.fin-modal-total span { color: var(--text); font-size: 13px; }
+
+@media (max-width: 760px) {
+  .fin-nw-accounts { display: none; }
+  .fin-budget-row { grid-template-columns: minmax(0, 1fr) 70px 70px auto; gap: 6px; }
+  .fin-acct-amount, .fin-bl-planned, .fin-bl-actual { width: 84px; }
+}

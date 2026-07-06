@@ -68,6 +68,7 @@ export function openEditor(entity = null, defaults = {}) {
         <div class="form-grid">
           <label><span id="f-date-label">Due date</span><input type="date" id="f-date"></label>
           <label>Time<input type="time" id="f-time"></label>
+          <label id="f-end-label">End date (optional)<input type="date" id="f-end"></label>
           <label>Priority
             <select id="f-priority">
               <option value="">None</option>
@@ -114,6 +115,8 @@ export function openEditor(entity = null, defaults = {}) {
   $('#f-notes').value = e.notes || '';
   $('#f-date').value = dateVal;
   $('#f-time').value = timeVal;
+  // Multi-day events store their inclusive END DAY in dueDate (plain YYYY-MM-DD).
+  $('#f-end').value = e.type === 'event' ? (e.dueDate || '').slice(0, 10) : '';
   $('#f-priority').value = e.priority || '';
   $('#f-project').value = e.project || '';
   $('#f-tags').value = (e.tags || []).join(', ');
@@ -144,6 +147,8 @@ export function openEditor(entity = null, defaults = {}) {
     const isEvent = $('#f-type').value === 'event';
     $('#f-date-label').textContent = isEvent ? 'Date' : 'Due date';
     $('#subtasks-section').hidden = isEvent;
+    // The optional end date applies to events only (multi-day spans).
+    $('#f-end-label').hidden = !isEvent;
   };
   applyType();
 
@@ -169,6 +174,15 @@ export function openEditor(entity = null, defaults = {}) {
     const time = $('#f-time').value;
     const stamp = date ? (time ? `${date}T${time}` : date) : null;
 
+    // Events may carry an inclusive end day in dueDate. Keep it only when it is
+    // on or after the start day; an earlier/blank end silently clears the span.
+    let eventEnd = null;
+    if (type === 'event') {
+      const end = $('#f-end').value;
+      // Compare day parts only — the start may carry a time (YYYY-MM-DDTHH:mm).
+      if (end && date && end >= date.slice(0, 10)) eventEnd = end;
+    }
+
     const patch = {
       type,
       title,
@@ -176,7 +190,7 @@ export function openEditor(entity = null, defaults = {}) {
       priority: $('#f-priority').value || null,
       project: $('#f-project').value.trim() || null,
       tags: $('#f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
-      dueDate: type === 'task' ? stamp : null,
+      dueDate: type === 'task' ? stamp : eventEnd,
       date: type === 'event' ? stamp : null,
       extra: { ...(entity?.extra || {}) },
     };
